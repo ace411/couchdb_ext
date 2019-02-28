@@ -1,0 +1,7 @@
+ARG_ENABLE('couchdb_ext', 'couchdb_ext support', 'no');
+
+if (PHP_COUCHDB_EXT != 'no') {
+	AC_DEFINE('HAVE_COUCHDB_EXT', 1, 'couchdb_ext support enabled');
+
+	EXTENSION('couchdb_ext', 'couchdb_ext.c', null, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1');
+}
