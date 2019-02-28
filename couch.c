@@ -122,13 +122,3 @@ void freeResult(char *s)
 {
     free(s);
 }
-
-/*
-int main(void)
-{
-    struct RetString result = couchRequest("http://localhost:5984", 1, "");
-    printf("Result is %s\n", result.ptr);
-    freeResult(result.ptr);
-    return 0;
-}
-*/
