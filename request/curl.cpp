@@ -8,16 +8,6 @@
 
 const static std::string errMsg = "Request terminated with an error of ";
 
-static size_t printFn(char *content, size_t size, size_t nmemb, std::string *data)
-{
-    if (data == NULL)
-        return 0;
-    
-    data->append(content, size * nmemb);
-
-    return size * nmemb;
-}
-
 void curlHeader(CURL *curl)
 {
     struct curl_slist *chunk = NULL;
@@ -65,7 +55,12 @@ std::string curlRequest(
     std::string result;
 
     if (curl) {
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, printFn);
+        typedef size_t(*CURL_WRITEFUNCTION_PTR)(char*, size_t, size_t, std::string*);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, static_cast<CURL_WRITEFUNCTION_PTR>([](char* contents, size_t size, size_t nmemb, std::string* data) -> size_t {
+            if (data == NULL)
+                return 0;
+            data->append(contents, size * nmemb);
+            return size * nmemb; }));
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
         curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem");
