@@ -64,10 +64,10 @@ std::string curlRequest(
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
         curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem");
-        curl_easy_setopt(curl, CURLOPT_URL, uri.c_str()); //convert URI to C string
+        curl_easy_setopt(curl, CURLOPT_URL, uri.c_str());
         curlHeader(curl);
         authOpt(curl, credentials);
-        verbOpt(curl, method);
+        verbOpt(curl, method, postData);
 
         resCode = curl_easy_perform(curl);
 
