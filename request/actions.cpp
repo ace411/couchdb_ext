@@ -1,10 +1,25 @@
 #include "actions.h"
 #include <tuple>
+#include <map>
 
-const static std::string _uuids = "_uuids?count=";
-const static std::string _alldbs = "_all_dbs";
-const static std::string _alldocs = "_all_docs";
+const static std::string _uuids         = "_uuids?count=";
+const static std::string _alldbs        = "_all_dbs";
+const static std::string _alldocs       = "_all_docs";
+const static std::string _designdocs    = "_design_docs";
+const static std::string _compact       = "_compact";
 const static std::tuple<std::string, std::string> scheme("http://", "https://"); 
+
+std::string buildQuery(std::map<std::string, std::string> &assoc)
+{ 
+    std::string queryStr = "?";
+    for (auto &idx : assoc)
+    {
+        queryStr += idx.first + "=" + idx.second + "&";
+    }
+    queryStr.pop_back();
+
+    return queryStr;
+}
 
 std::string baseUriGen(
     const std::string &host,
@@ -88,8 +103,42 @@ Php::Value Actions::allDocs(Php::Parameters &params) const
 Php::Value Actions::getDocsByKey(Php::Parameters &params) const
 {
     std::string database = params[0];
-    std::string postData = Php::call("json_encode", params[1]);
+    Php::Value opts = params[1];
+    std::string postData = Php::call("json_encode", opts);
     Php::Value result = request(POST_REQUEST, (database + "/" + _alldocs), postData);
 
     return result;
+}
+
+Php::Value Actions::getDoc(Php::Parameters &params) const
+{
+    std::string database = params[0];
+    std::string docId = params[1];
+    std::map<std::string, std::string> query = params[2];
+    std::string opts = buildQuery(query);
+    Php::Value result = request(GET_REQUEST, (database + "/" + docId + opts));
+    return result;
+}
+
+Php::Value Actions::getDesignDocs(Php::Parameters &params) const
+{
+    std::string database = params[0];
+    std::map<std::string, std::string> assoc = params[1];
+    std::string opts = buildQuery(assoc);
+    std::string qString = (database + "/" + _designdocs + opts);
+    Php::out << qString << std::endl;
+    Php::Value result = request(GET_REQUEST, qString);
+
+    return result;
+}
+
+Php::Value Actions::isAvailable() const
+{
+    std::string _request = request(GET_REQUEST, "/_up");
+    auto lambda = [](const std::string &str) -> bool {
+        std::string::size_type sType;
+        sType = str.find("\"ok\"");
+        return sType != std::string::npos ? true : false;
+    };
+    return lambda(_request);
 }

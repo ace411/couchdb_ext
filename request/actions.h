@@ -26,7 +26,9 @@ class Actions: public Php::Base {
         Php::Value alldbs() const;
         Php::Value allDocs(Php::Parameters &params) const;
         Php::Value getDocsByKey(Php::Parameters &params) const;
-        //Php::Value getDoc(Php::Parameters &params) const;
+        Php::Value getDoc(Php::Parameters &params) const;
+        Php::Value getDesignDocs(Php::Parameters &params) const;
+        Php::Value isAvailable() const;
 };
 
 #endif //end __ACTIONS_H__

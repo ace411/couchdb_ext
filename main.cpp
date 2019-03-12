@@ -17,6 +17,20 @@ extern "C" {
         actions.method<&Actions::allDocs>("alldocs", {
             Php::ByVal("database", Php::Type::String, true)
         });
+        actions.method<&Actions::getDocsByKey>("getDocsByKey", {
+            Php::ByVal("database", Php::Type::String, true),
+            Php::ByVal("keys", Php::Type::Array, true)
+        });
+        actions.method<&Actions::getDoc>("getDoc", {
+            Php::ByVal("database", Php::Type::String, true),
+            Php::ByVal("docId", Php::Type::String, true),
+            Php::ByVal("options", Php::Type::Array, true)
+        });
+        actions.method<&Actions::getDesignDocs>("getDesignDocs", {
+            Php::ByVal("database", Php::Type::String, true),
+            Php::ByVal("options", Php::Type::Array, true)
+        });
+        actions.method<&Actions::isAvailable>("isAvailable");
         actions.method<&Actions::alldbs>("alldbs");
         
         extension.add(std::move(actions));
