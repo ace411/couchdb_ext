@@ -24,6 +24,7 @@ class Actions: public Php::Base {
         std::string request(int opt, const std::string &path, const std::string &data) const;
         Php::Value uuids(Php::Parameters &params) const;
         Php::Value alldbs() const;
+        Php::Value createDb(Php::Parameters &params) const;
         Php::Value allDocs(Php::Parameters &params) const;
         Php::Value getDocsByKey(Php::Parameters &params) const;
         Php::Value getDoc(Php::Parameters &params) const;

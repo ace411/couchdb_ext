@@ -1,15 +1,5 @@
 #include "request.h"
 
-std::string credGen(const std::string &user, const std::string &pwd)
-{
-    std::string cred = "";
-    if (user.empty() || pwd.empty()) {
-        return "";
-    }
-    cred += user + ":" + pwd;
-    return cred;
-}
-
 HttpRequest::HttpRequest() : 
 uri("http://localhost:5984"),
 user(""),
@@ -37,17 +27,31 @@ HttpRequest::~HttpRequest()
     curl_global_cleanup();
 }
 
-std::string HttpRequest::getResult(const std::string &path)
+std::string HttpRequest::credentials() const
 {
-    return curlRequest(uri + path, GET_REQUEST, "", credGen(user, pwd), timeout);
+    auto credentials = [](const std::string &user, const std::string &pwd) -> std::string {
+        std::string cred = "";
+        if (user.empty() || pwd.empty())
+        {
+            return "";
+        }
+        cred += user + ":" + pwd;
+        return cred;
+    };
+    return credentials(user, pwd);
 }
 
-std::string HttpRequest::postResult(const std::string &path, const std::string &postData)
-{
-    return curlRequest(uri + path, POST_REQUEST, postData, credGen(user, pwd), timeout);
+std::string HttpRequest::getResult(const std::string &path) const
+{ 
+    return curlRequest<std::string, int, long>(uri + path, GET_REQUEST, "", credentials(), timeout);
 }
 
-std::string HttpRequest::putResult(const std::string &path, const std::string &postData)
+std::string HttpRequest::postResult(const std::string &path, const std::string &postData) const
 {
-    return curlRequest(uri + path, PUT_REQUEST, postData, credGen(user, pwd), timeout);
+    return curlRequest<std::string, int, long>(uri + path, POST_REQUEST, postData, credentials(), timeout);
+}
+
+std::string HttpRequest::putResult(const std::string &path, const std::string &postData) const
+{
+    return curlRequest<std::string, int, long>(uri + path, PUT_REQUEST, postData, credentials(), timeout);
 }

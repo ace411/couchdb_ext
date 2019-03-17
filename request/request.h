@@ -17,9 +17,10 @@ class HttpRequest
             long timeout);
         HttpRequest();
         ~HttpRequest();
-        std::string getResult(const std::string &path);
-        std::string postResult(const std::string &path, const std::string &postData);
-        std::string putResult(const std::string &path, const std::string &postData);
+        std::string credentials() const;
+        std::string getResult(const std::string &path) const;
+        std::string postResult(const std::string &path, const std::string &postData) const;
+        std::string putResult(const std::string &path, const std::string &postData) const;
 };
 
 #endif //end __REQUEST_H__

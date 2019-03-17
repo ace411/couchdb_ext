@@ -9,7 +9,8 @@ const static std::string _designdocs    = "_design_docs";
 const static std::string _compact       = "_compact";
 const static std::tuple<std::string, std::string> scheme("http://", "https://"); 
 
-std::string buildQuery(std::map<std::string, std::string> &assoc)
+template<typename M>
+auto buildQuery(M &assoc) -> std::string
 { 
     std::string queryStr = "?";
     for (auto &idx : assoc)
@@ -21,17 +22,22 @@ std::string buildQuery(std::map<std::string, std::string> &assoc)
     return queryStr;
 }
 
-std::string baseUriGen(
-    const std::string &host,
-    const std::string &user,
-    const std::string &pwd,
-    long port = 5984)
+template<typename S, typename L>
+auto baseUriGen(const S &host, const S &user, const S &pwd, L port = 5984) -> std::string
 {
     std::string baseUri;
     baseUri += (host == "localhost") ? std::get<0>(scheme) + host + ":" + std::to_string(port) : 
         std::get<1>(scheme) + user + ":" + pwd + "@" + host;
     baseUri += "/";
     return baseUri;
+}
+
+template<typename S>
+auto checkStrExists(const S &str, const S &match) -> bool
+{
+    std::string::size_type sType;
+    sType = str.find(match);
+    return sType != std::string::npos ? true : false;
 }
 
 Actions::Actions() : 
@@ -95,7 +101,9 @@ Php::Value Actions::alldbs() const
 Php::Value Actions::allDocs(Php::Parameters &params) const
 {
     std::string database = params[0];
-    Php::Value result = request(GET_REQUEST, (database + "/" + _alldocs));
+    std::map<std::string, std::string> opts = params[1];
+    std::string query = buildQuery<std::map<std::string, std::string>>(opts);
+    Php::Value result = request(GET_REQUEST, (database + "/" + _alldocs + query));
 
     return result;    
 }
@@ -115,7 +123,7 @@ Php::Value Actions::getDoc(Php::Parameters &params) const
     std::string database = params[0];
     std::string docId = params[1];
     std::map<std::string, std::string> query = params[2];
-    std::string opts = buildQuery(query);
+    std::string opts = buildQuery<std::map<std::string, std::string>>(query);
     Php::Value result = request(GET_REQUEST, (database + "/" + docId + opts));
     return result;
 }
@@ -135,10 +143,15 @@ Php::Value Actions::getDesignDocs(Php::Parameters &params) const
 Php::Value Actions::isAvailable() const
 {
     std::string _request = request(GET_REQUEST, "/_up");
-    auto lambda = [](const std::string &str) -> bool {
-        std::string::size_type sType;
-        sType = str.find("\"ok\"");
-        return sType != std::string::npos ? true : false;
-    };
-    return lambda(_request);
+
+    auto result = checkStrExists<std::string>(_request, "\"ok\"");
+    return result;
+}
+
+Php::Value Actions::createDb(Php::Parameters &params) const
+{
+    std::string database = params[0];
+    Php::Value result = request(PUT_REQUEST, database);
+
+    return result;
 }

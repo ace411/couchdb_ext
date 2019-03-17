@@ -43,12 +43,8 @@ void authOpt(CURL *curl, const std::string &credentials = "")
     }    
 }
 
-std::string curlRequest(
-    const std::string &uri, 
-    int method = 1, 
-    const std::string &postData = "", 
-    const std::string &credentials = "", 
-    long timeout = 60)
+template<typename S, typename I, typename L>
+auto curlRequest(const S &uri, I method = 1, const S &postData = "", const S &credentials = "", L timeout = 60) -> std::string
 {
     CURLcode resCode;
     CURL *curl = curl_easy_init();
