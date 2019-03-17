@@ -30,6 +30,9 @@ extern "C" {
             Php::ByVal("database", Php::Type::String, true),
             Php::ByVal("options", Php::Type::Array, true)
         });
+        actions.method<&Actions::createDb>("createDb", {
+            Php::ByVal("database", Php::Type::String, true)
+        });
         actions.method<&Actions::isAvailable>("isAvailable");
         actions.method<&Actions::alldbs>("alldbs");
         
