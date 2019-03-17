@@ -1,14 +1,14 @@
 --TEST--
-Check if couchdb_ext is loaded
+Check if extension is installed.
 --SKIPIF--
 <?php
 if (!extension_loaded('couchdb_ext')) {
-	echo 'skip';
+    echo 'skip';
 }
 ?>
 --FILE--
 <?php
-echo 'The extension "couchdb_ext" is available';
+echo 'Extension loaded';
 ?>
 --EXPECT--
-The extension "couchdb_ext" is available
+'Extension loaded'
