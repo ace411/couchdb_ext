@@ -16,7 +16,7 @@ class Request
             long port, 
             long timeout);
         std::string uuids(long count) const;
-        std::string isAvailable() const;
+        bool isAvailable() const;
 };
 
 #endif // REQUEST_H

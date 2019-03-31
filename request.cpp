@@ -26,6 +26,24 @@ auto concat(S glue, L words) -> std::string
     return retval;
 }
 
+template <typename S>
+auto checkStrExists(S &match, S &str) -> bool
+{
+    std::string::size_type sType;
+    sType = str.find(match);
+    return sType != std::string::npos ? true : false;
+}
+
+template<typename C>
+void appHeaders(C curl)
+{
+    struct curl_slist *chunk = NULL;
+
+    chunk = curl_slist_append(chunk, "Content-Type: application/json");
+    chunk = curl_slist_append(chunk, "Accept: application/json");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
+}
+
 template<typename S, typename L>
 auto curlRequest(S &url, L method, L timeout) -> std::string
 {
@@ -49,11 +67,28 @@ auto curlRequest(S &url, L method, L timeout) -> std::string
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
+        appHeaders<CURL *>(curl);
 
         resCode = curl_easy_perform(curl);
-        if (CURLE_OK != resCode)
+        if (resCode != CURLE_OK)
         {
-            zend_throw_error(NULL, "An error occurred with the connection");
+            switch (resCode) {
+                case CURLE_FAILED_INIT:
+                    zend_throw_error(NULL, "An error occurred at INIT time");
+                    break;
+                case CURLE_URL_MALFORMAT:
+                    zend_throw_error(NULL, "Malformed URL");
+                    break;
+                case CURLE_COULDNT_CONNECT:
+                    zend_throw_error(NULL, "Could not connect");
+                    break;
+                case CURLE_REMOTE_ACCESS_DENIED:
+                    zend_throw_error(NULL, "Access denied");
+                    break;
+                default:
+                    zend_throw_error(NULL, "An error occurred");
+                    break;
+            }
         }
         curl_easy_cleanup(curl);
     }
@@ -89,12 +124,14 @@ timeout(timeout)
 
 std::string Request::uuids(long count) const
 {
-    std::string reqUri = concat<std::string, StrArgs>("?", {baseUri, concat<std::string, StrArgs>("=", {"count", std::to_string(count)})});
+    std::string reqUri = concat<std::string, StrArgs>("?", {(baseUri + "/_uuids"), ("count=" + std::to_string(count))});
     return curlRequest<const std::string, long>(reqUri, 1, timeout);    
 }
 
-std::string Request::isAvailable() const
+bool Request::isAvailable() const
 {
-    std::string reqUri = concat<std::string, StrArgs>("/", {baseUri, "up"});
-    return curlRequest<const std::string, long>(reqUri, 1, timeout);
+    std::string reqUri = concat<std::string, StrArgs>("/", {baseUri, "_up"});
+    std::string retval = curlRequest<const std::string, long>(reqUri, 1, timeout);
+    
+    return checkStrExists<const std::string>("\"ok\"", retval);
 }
