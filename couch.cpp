@@ -36,7 +36,7 @@ PHP_METHOD(Request, __construct)
 
     intern = Z_TSTOBJ_P(id);
     if (intern != NULL)
-        intern->request = new Request((const char *)host, (const char *)user, (const char *)pwd, port, timeout);
+        intern->request = new Request(ZSTR_VAL(host), ZSTR_VAL(user), ZSTR_VAL(pwd), port, timeout);
 }
 
 PHP_METHOD(Request, uuids)
@@ -57,6 +57,18 @@ PHP_METHOD(Request, uuids)
     } 
 }
 
+PHP_METHOD(Request, isAvailable)
+{
+    zval *id = getThis();
+    request_object *intern;
+
+    ZEND_PARSE_PARAMETERS_NONE();
+
+    intern = Z_TSTOBJ_P(id);
+    if (intern != NULL)
+        RETURN_BOOL(intern->request->isAvailable());
+}
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_constructor, 0, 0, 5)
     ZEND_ARG_INFO(0, host)
     ZEND_ARG_INFO(0, user)
@@ -72,6 +84,7 @@ ZEND_END_ARG_INFO();
 static const zend_function_entry request_methods[] = {
     PHP_ME(Request, __construct, arginfo_constructor, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
     PHP_ME(Request, uuids, arginfo_uuids, ZEND_ACC_PUBLIC)
+    PHP_ME(Request, isAvailable, NULL, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 
