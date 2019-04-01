@@ -44,8 +44,80 @@ void appHeaders(C curl)
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
 }
 
+template<typename C, typename S>
+void appAuth(C curl, S &credentials, S &url)
+{
+    if (checkStrExists<const std::string>("localhost", url)) 
+    {
+        curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_easy_setopt(curl, CURLOPT_USERPWD, credentials.c_str());
+    }
+}
+
+template<typename C, typename L, typename S>
+void appMethod(C curl, L method, S &data)
+{
+    switch (method)
+    {
+        case PUT_OPT:
+            curl_easy_setopt(curl, CURLOPT_PUT, 1L);
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+            break;
+
+        case POST_OPT:
+            curl_easy_setopt(curl, CURLOPT_POST, 1L);
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+            break;
+
+        default:
+            curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+            break;
+    }
+}
+
+template<typename T>
+void phpCurlError(T code)
+{
+    switch (code)
+    {
+        case CURLE_FAILED_INIT:
+            zend_throw_error(NULL, "An error occurred at INIT time");
+            break;
+        case CURLE_URL_MALFORMAT:
+            zend_throw_error(NULL, "Malformed URL");
+            break;
+        case CURLE_COULDNT_CONNECT:
+            zend_throw_error(NULL, "Could not connect");
+            break;
+        case CURLE_REMOTE_ACCESS_DENIED:
+            zend_throw_error(NULL, "Access denied");
+            break;
+        case CURLE_OPERATION_TIMEDOUT:
+            zend_throw_error(NULL, "Operation timed out");
+            break;
+        case CURLE_GOT_NOTHING:
+            zend_throw_error(NULL, "Nothing was returned from the server");
+            break;
+        case CURLE_PEER_FAILED_VERIFICATION:
+            zend_throw_error(NULL, "SSL certificate failed verification");
+            break;
+        case CURLE_SEND_ERROR:
+            zend_throw_error(NULL, "Failed sending network data");
+            break;
+        case CURLE_SSL_CERTPROBLEM:
+            zend_throw_error(NULL, "SSL certificate error");
+            break;
+        case CURLE_SSL_CACERT_BADFILE:
+            zend_throw_error(NULL, "SSL file error");
+            break;
+        default:
+            zend_throw_error(NULL, "An error occurred");
+            break;
+    }
+}
+
 template<typename S, typename L>
-auto curlRequest(S &url, L method, L timeout) -> std::string
+auto curlRequest(S &url, L method, S &credentials, S &data, L timeout) -> std::string
 {
     CURLcode resCode(CURLE_FAILED_INIT);
     CURL *curl = curl_easy_init();
@@ -68,32 +140,30 @@ auto curlRequest(S &url, L method, L timeout) -> std::string
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
         appHeaders<CURL *>(curl);
+        appAuth<CURL *, const std::string>(curl, credentials, url);
+        appMethod<CURL *, long, const std::string>(curl, method, data);
 
         resCode = curl_easy_perform(curl);
         if (resCode != CURLE_OK)
         {
-            switch (resCode) {
-                case CURLE_FAILED_INIT:
-                    zend_throw_error(NULL, "An error occurred at INIT time");
-                    break;
-                case CURLE_URL_MALFORMAT:
-                    zend_throw_error(NULL, "Malformed URL");
-                    break;
-                case CURLE_COULDNT_CONNECT:
-                    zend_throw_error(NULL, "Could not connect");
-                    break;
-                case CURLE_REMOTE_ACCESS_DENIED:
-                    zend_throw_error(NULL, "Access denied");
-                    break;
-                default:
-                    zend_throw_error(NULL, "An error occurred");
-                    break;
-            }
+            phpCurlError<CURLcode>(resCode);
         }
         curl_easy_cleanup(curl);
     }
     curl_global_cleanup();
     return result;
+}
+
+template<typename S, typename L>
+auto getRequest(S &url, S &credentials, L timeout) -> std::string
+{
+    return curlRequest<const std::string, long>(url, GET_OPT, credentials, "", timeout);
+}
+
+template<typename S, typename L>
+auto postRequest(S &url, S &credentials, S &data, L timeout) -> std::string
+{
+    return curlRequest<const std::string, long>(url, POST_OPT, credentials, data, timeout);
 }
 
 template<typename S, typename L>
@@ -120,18 +190,27 @@ port(port),
 timeout(timeout)
 {
     baseUri = uriGen<std::string, long>(host, user, pwd, port);
+    credentials = concat<std::string, StrArgs>(":", {user, pwd});
 }
 
 std::string Request::uuids(long count) const
 {
     std::string reqUri = concat<std::string, StrArgs>("?", {(baseUri + "/_uuids"), ("count=" + std::to_string(count))});
-    return curlRequest<const std::string, long>(reqUri, 1, timeout);    
+    
+    return getRequest<const std::string, long>(reqUri, credentials, timeout);    
 }
 
 bool Request::isAvailable() const
 {
     std::string reqUri = concat<std::string, StrArgs>("/", {baseUri, "_up"});
-    std::string retval = curlRequest<const std::string, long>(reqUri, 1, timeout);
-    
+    std::string retval = getRequest<const std::string, long>(reqUri, credentials, timeout);
+
     return checkStrExists<const std::string>("\"ok\"", retval);
+}
+
+std::string Request::allDbs() const
+{
+    std::string reqUri = concat<std::string, StrArgs>("/", {baseUri, "_all_dbs"});
+
+    return getRequest<const std::string, long>(reqUri, credentials, timeout);
 }

@@ -5,7 +5,7 @@
 class Request 
 {
     private:
-        std::string host, user, pwd, baseUri;
+        std::string host, user, pwd, baseUri, credentials;
         long port;
         long timeout = 60;
 
@@ -16,6 +16,7 @@ class Request
             long port, 
             long timeout);
         std::string uuids(long count) const;
+        std::string allDbs() const;
         bool isAvailable() const;
 };
 

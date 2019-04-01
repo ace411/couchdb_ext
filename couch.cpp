@@ -41,7 +41,7 @@ PHP_METHOD(Request, __construct)
 
 PHP_METHOD(Request, uuids)
 {
-    long idCount;
+    long idCount = 1;
     zval *id = getThis();
     request_object *intern;
 
@@ -69,6 +69,20 @@ PHP_METHOD(Request, isAvailable)
         RETURN_BOOL(intern->request->isAvailable());
 }
 
+PHP_METHOD(Request, allDbs)
+{
+    zval *id = getThis();
+    request_object *intern;
+
+    ZEND_PARSE_PARAMETERS_NONE(); 
+
+    intern = Z_TSTOBJ_P(id);
+    if (intern != NULL) {
+        std::string retval = intern->request->allDbs();
+        RETURN_STRING(retval.c_str())
+    }
+}
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_constructor, 0, 0, 5)
     ZEND_ARG_INFO(0, host)
     ZEND_ARG_INFO(0, user)
@@ -85,6 +99,7 @@ static const zend_function_entry request_methods[] = {
     PHP_ME(Request, __construct, arginfo_constructor, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
     PHP_ME(Request, uuids, arginfo_uuids, ZEND_ACC_PUBLIC)
     PHP_ME(Request, isAvailable, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Request, allDbs, NULL, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 
