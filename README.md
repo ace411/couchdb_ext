@@ -131,3 +131,24 @@ Generates a specified number of Universally Unique Identifiers.
 ...
 echo $couch->uuids(4); //returns JSON string
 ```
+
+### allDbs
+
+```
+allDbs(): string
+```
+
+**Argument(s):**
+
+> None
+
+Outputs a list of all the databases available on disk.
+
+```php
+...
+$dbs = json_decode($couch->allDbs(), true);
+
+if (!in_array('your-database', $dbs)) {
+    echo 'My database does not exist';
+}
+```
