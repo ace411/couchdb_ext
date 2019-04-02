@@ -4,8 +4,6 @@ This version of the extension is one written primarily in C++ but with C binding
 
 ## Requirements
 
-- [PHP-CPP](https://www.php-cpp.com/)
-
 - [libcurl](https://https://curl.haxx.se/libcurl/)
 
 - PHP 7.1 or greater (Preferably a Non Thread-Safe version)
@@ -36,7 +34,7 @@ make test
 
 ## Rationale
 
-I recently published the fauxton API client, an asynchronous - non-blocking IO solution which is relatively more performant than the synchronous version I wrote earlier.
+I recently published the [fauxton API client](https://github.com/php-api-clients/fauxton), an asynchronous - non-blocking IO solution which is relatively more performant than the [synchronous version](https://github.com/ace411/fauxton-client) I wrote earlier.
 
 Also, there exists an [article](https://medium.com/@agiroLoki/a-potential-php-extension-for-couchdb-9604cda48f27) whose premise is farther justifying this undertaking.
 
