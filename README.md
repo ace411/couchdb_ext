@@ -1,5 +1,7 @@
 # couchdb_ext
 
+[![Build Status](https://travis-ci.org/ace411/couchdb_ext.svg?branch=master)](https://travis-ci.org/ace411/couchdb_ext)
+
 This version of the extension is one written primarily in C++ but with C bindings.
 
 ## Requirements
