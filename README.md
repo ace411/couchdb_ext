@@ -152,3 +152,24 @@ if (!in_array('your-database', $dbs)) {
     echo 'My database does not exist';
 }
 ```
+
+### allDocs
+
+```
+allDocs(string $database, array $options): string
+```
+
+**Argument(s):**
+
+- ***database (string)*** - The name of the database
+- ***options (array)*** - An array of [CouchDB-specific query options](http://docs.couchdb.org/en/stable/api/database/bulk-api.html#db-all-docs)
+
+Outputs a list of all documents in a specified database.
+
+```php
+...
+echo $couch->allDocs('your-database', [
+    'include_docs' => 'true',
+    'descending' => 'true' 
+]);
+```
