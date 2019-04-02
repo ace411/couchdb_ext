@@ -8,7 +8,7 @@ This version of the extension is one written primarily in C++ but with C binding
 
 - [libcurl](https://https://curl.haxx.se/libcurl/)
 
-- PHP 7.1 or greater (Preferably a Non Thread-Safe version)
+- PHP 7.3 or greater (Preferably a Non Thread-Safe version)
 
 ## Installation
 
