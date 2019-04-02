@@ -1,14 +1,14 @@
 --TEST--
-Check if extension is installed.
+Check if couchdb_ext works
 --SKIPIF--
-<?php
-if (!extension_loaded('couchdb_ext')) {
+<?php 
+if (!extension_loaded('couchdb_ext')) 
     echo 'skip';
-}
 ?>
 --FILE--
 <?php
-echo 'Extension loaded';
+$couch = new CouchDb('localhost', '', '', 5984, 60);
+echo gettype($couch);
 ?>
 --EXPECT--
-'Extension loaded'
+object

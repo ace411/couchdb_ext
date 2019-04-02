@@ -1,0 +1,18 @@
+language: php
+php:
+  - 7.2
+  - 7.3
+
+sudo: enabled
+
+before_script:
+  - sudo apt-get install libcurl4-openssl-dev
+  - curl -X PUT http://localhost:5984/testdb
+
+services:
+  - couchdb
+
+script:
+  - phpize
+  - ./configure --enable-couchdb_ext CFLAGS="-lcurl"
+  - make && make test

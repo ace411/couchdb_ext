@@ -1,6 +1,6 @@
-# couchdb_ext cpp
+# couchdb_ext
 
-C++ version of the CouchDB PHP extension.
+This version of the extension is one written primarily in C++ but with C bindings.
 
 ## Requirements
 
@@ -12,14 +12,26 @@ C++ version of the CouchDB PHP extension.
 
 ## Installation
 
-Because ext-func is an extension built on top of PHP-CPP and dependent on libcurl, installation of both PHP-CPP and libcurl is a mandatory prerequisite for using this tool. There exists an elaborate [installation guide](http://www.php-cpp.com/documentation/install) on the PHP-CPP website - I suggest that you peruse it. If you are, however, uninterested in following the official PHP-CPP installation guide and combing through the libcurl installation docs, run the ```install.sh``` shell script in a console of your choosing.
+Because couchdb_ext is an extension built on top of libcurl, installation of said utility is a mandatory prerequisite for using this tool.
 
-Once PHP-CPP is successfully installed on your system, type the following in a console to install ```couchdb_ext``` on your machine.
+Installing libcurl can be done by typing the following in a console of your choosing:
 
 ```
-git clone https://github.com/ace411/couchdb_ext.git
-cd couchdb_ext
+sudo apt-get install libcurl4-openssl-dev
+```
+
+Upon successful installation of libcurl, type the following - also in a console - to install ```couchdb_ext```:
+
+```
+phpize
+./configure --enable-couchdb_ext CFLAGS="-lcurl"
 make && sudo make install
+```
+
+If you intend to run the tests in the tests directory, run the following command:
+
+```
+make test
 ```
 
 ## Rationale
@@ -120,85 +132,44 @@ Generates a specified number of Universally Unique Identifiers.
 echo $couch->uuids(4); //returns JSON string
 ```
 
-### alldbs
+### allDbs
 
 ```
-alldbs(): string
+allDbs(): string
 ```
 
 **Argument(s):**
 
-> *None*
+> None
 
-Outputs all the databases available on disk.
+Outputs a list of all the databases available on disk.
 
 ```php
 ...
-echo $couch->alldbs(); //outputs a list of databases
+$dbs = json_decode($couch->allDbs(), true);
+
+if (!in_array('your-database', $dbs)) {
+    echo 'My database does not exist';
+}
 ```
 
-### alldocs
+### allDocs
 
 ```
-alldocs(string $database, array $opts): string
+allDocs(string $database, array $options): string
 ```
 
 **Argument(s):**
 
 - ***database (string)*** - The name of the database
-- ***opts (array)*** - An array of query options. See [CouchDB docs](http://docs.couchdb.org/en/stable/api/database/bulk-api.html#db-all-docs) for more info.
+- ***options (array)*** - An array of [CouchDB-specific query options](http://docs.couchdb.org/en/stable/api/database/bulk-api.html#db-all-docs)
 
-Outputs all the documents in a specified database.
+Outputs a list of all documents in a specified database.
 
 ```php
 ...
-$couch->alldocs('your-database', [
+echo $couch->allDocs('your-database', [
     'include_docs' => 'true',
-    'descending' => 'false',
-    'skip' => 0
-]); //should return a list of documents
-```
-
-### getDoc
-
-```
-getDoc(string $database, string $docId, array $opts): string
-```
-
-**Argument(s):**
-
-- ***database (string)*** - Database name
-- ***docId (string)*** - Database document identifier
-- ***opts (array)*** - An array of query options. See [CouchDB docs]() for more info.
-
-Fetches a single document from a database.
-
-```php
-...
-echo $couch->getDoc('your-database', 'document-ID', [
-    'include_docs' => true,
-    'skip' => 0
-]);
-```
-
-### getDocsByKey
-
-```
-getDocsByKey(string $database, array $keys): string
-```
-
-**Argument(s):**
-
-- ***database (string)*** - The database to search
-- ***keys (array)*** - A list of document identifiers to include in the search
-
-```php
-...
-$couch->getDocsByKey('testdb', [
-    'keys' => [
-        'agiro-loki',
-        'ace411',
-        'bruno-michael'
-    ]
+    'descending' => 'true' 
 ]);
 ```
