@@ -1,5 +1,6 @@
 #include "php_couchdb_ext.h"
 #include "request.h"
+#include "zend_smart_str.h"
 
 zend_object_handlers request_object_handlers;
 
@@ -83,6 +84,43 @@ PHP_METHOD(Request, allDbs)
     }
 }
 
+PHP_METHOD(Request, allDocs)
+{
+    zend_string *database;
+    HashTable *queryParams;
+    zend_string *skey;
+    zval *val;
+    smart_str queryBuild = {0};
+
+    zval *id = getThis();
+    request_object *intern;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_STR(database)
+        Z_PARAM_ARRAY_HT(queryParams)
+    ZEND_PARSE_PARAMETERS_END();
+
+    ZEND_HASH_FOREACH_STR_KEY_VAL(queryParams, skey, val) {
+        zval dup;
+        ZVAL_COPY_VALUE(&dup, val);
+        convert_to_cstring(&dup);
+        smart_str_appends(&queryBuild, ZSTR_VAL(skey));
+        smart_str_appendc(&queryBuild, '=');
+        smart_str_appends(&queryBuild, Z_STRVAL(dup));
+        smart_str_appendc(&queryBuild, '&');
+    } ZEND_HASH_FOREACH_END();
+    
+    smart_str_0(&queryBuild);
+
+    intern = Z_TSTOBJ_P(id);
+    if (intern != NULL) {
+        std::string retval = intern->request->allDocs(ZSTR_VAL(database), ZSTR_VAL(queryBuild.s));
+        smart_str_free(&queryBuild);
+        FREE_HASHTABLE(queryParams);
+        RETURN_STRING(retval.c_str());
+    }
+}
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_constructor, 0, 0, 5)
     ZEND_ARG_INFO(0, host)
     ZEND_ARG_INFO(0, user)
@@ -95,11 +133,17 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_uuids, 0, 0, 1)
     ZEND_ARG_INFO(0, idCount)
 ZEND_END_ARG_INFO();
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_alldocs, 0, 0, 2)
+    ZEND_ARG_INFO(0, database)
+    ZEND_ARG_ARRAY_INFO(0, options, 0)
+ZEND_END_ARG_INFO();
+
 static const zend_function_entry request_methods[] = {
     PHP_ME(Request, __construct, arginfo_constructor, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
     PHP_ME(Request, uuids, arginfo_uuids, ZEND_ACC_PUBLIC)
     PHP_ME(Request, isAvailable, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Request, allDbs, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Request, allDocs, arginfo_alldocs, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 

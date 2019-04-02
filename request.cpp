@@ -178,6 +178,16 @@ auto uriGen(S host, S user, S pwd, L port) -> std::string
     return retval;
 }
 
+template<typename S>
+auto remAmpersand(S str) -> std::string
+{
+    const char &last = str.back();
+    if (last == '&')
+        str.pop_back();
+
+    return str;
+}
+
 Request::Request(const std::string &host, 
     const std::string &user,
     const std::string &pwd,
@@ -211,6 +221,14 @@ bool Request::isAvailable() const
 std::string Request::allDbs() const
 {
     std::string reqUri = concat<std::string, StrArgs>("/", {baseUri, "_all_dbs"});
+
+    return getRequest<const std::string, long>(reqUri, credentials, timeout);
+}
+
+std::string Request::allDocs(const std::string &database, const std::string &params) const
+{
+    std::string reqUri = concat<std::string, StrArgs>("", {(baseUri + "/" + database + "/"), 
+        concat<std::string, StrArgs>("?", {"_all_docs", remAmpersand<std::string>(params)})});
 
     return getRequest<const std::string, long>(reqUri, credentials, timeout);
 }
