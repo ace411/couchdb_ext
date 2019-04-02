@@ -1,11 +1,5 @@
 --TEST--
 Extensions generates arbitrary number of unique identifiers.
---SKIPIF--
-<?php
-$couch = new CouchDb('localhost', '', '', 5984, 60);
-if (!$couch->isAvailable())
-    echo 'skip';
-?>
 --FILE--
 <?php
 $couch = new CouchDb('localhost', '', '', 5984, 60);
