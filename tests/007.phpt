@@ -10,7 +10,7 @@ echo gettype($couch->search('testdb', [
             '$regex' => '(?i)ike'
         ] 
     ],
-    'fields'            => ['_id', '_rev', 'github']
+    'fields'            => ['_id', '_rev', 'github'],
     'execution_stats'   => true
 ]));
 ?>
