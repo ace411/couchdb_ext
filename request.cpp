@@ -232,3 +232,11 @@ std::string Request::allDocs(const std::string &database, const std::string &par
 
     return getRequest<const std::string, long>(reqUri, credentials, timeout);
 }
+
+bool Request::insertDocs(const std::string &database, const std::string &data) const
+{
+    std::string reqUri = concat<std::string, StrArgs>("/", {baseUri, database, "_bulk_docs"});
+    std::string result = postRequest<const std::string, long>(reqUri, credentials, data, timeout);
+
+    return checkStrExists<const std::string>("\"ok\"", result);
+}

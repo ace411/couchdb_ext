@@ -82,22 +82,6 @@ const CONFIG = ['localhost', 'your-username', 'your-password', 5984, 60];
 $couchDb = new CouchDb(...CONFIG);
 ```
 
-### createDb
-
-```
-createDb(string $database): string
-```
-
-**Argument(s):**
-
-- ***database (string)*** - The database to create
-
-Creates a database.
-
-```php
-echo $couch->createDb('testdb');
-```
-
 ### isAvailable
 
 ```
@@ -112,7 +96,9 @@ Checks if the database at the constructor-specified location is present.
 
 ```php
 ...
-$couch->isAvailable(); //returns true or false
+if ($couch->isAvailable()) {
+    echo $couch->allDocs('your-database');
+} 
 ```
 
 ### uuids
@@ -172,4 +158,33 @@ echo $couch->allDocs('your-database', [
     'include_docs' => 'true',
     'descending' => 'true' 
 ]);
+```
+
+### insertDocs
+
+```
+insertDocs(string $database, array $data): bool
+```
+
+**Argument(s):**
+
+- ***database (string)*** - The name of the database
+- ***data (array)*** - The data to insert in the database
+
+> Note: Please include the 'docs' key in the $data array to preempt a false response
+
+Inserts data in a database.
+
+```php
+...
+$couch->insertDocs('your-database', [
+    'docs' => [
+        [
+            'name'      => 'Michael',
+            'github'    => '@ace411',
+            'twitter'   => '@agiroLoki' 
+        ],
+        ...
+    ]
+]); //outputs true or false
 ```

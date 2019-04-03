@@ -12,6 +12,7 @@ extern "C"
 {
     #include "php.h"
     #include <curl/curl.h>
+    #include <ext/json/php_json.h>
 }
 
 extern zend_module_entry couchdb_ext_module_entry;
