@@ -136,7 +136,6 @@ PHP_METHOD(Request, insertDocs)
         Z_PARAM_ARRAY(docData)
     ZEND_PARSE_PARAMETERS_END();
 
-    zend_string_free(docsKey);
     php_json_encode(&jsonData, docData, 0);
     smart_str_0(&jsonData);
 
@@ -147,6 +146,32 @@ PHP_METHOD(Request, insertDocs)
         smart_str_free(&jsonData);
         RETURN_BOOL(retval);
     } 
+}
+
+PHP_METHOD(Request, search)
+{
+    zend_string *database;
+    zval *query;
+    smart_str jsonData = {0};
+
+    zval *id = getThis();
+    request_object *intern;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_STR(database)
+        Z_PARAM_ARRAY(query)
+    ZEND_PARSE_PARAMETERS_END();
+
+    php_json_encode(&jsonData, query, 0);
+    smart_str_0(&jsonData);
+
+    intern = Z_TSTOBJ_P(id);
+    if (intern != NULL)
+    {
+        std::string retval = intern->request->search(ZSTR_VAL(database), ZSTR_VAL(jsonData.s));
+        smart_str_free(&jsonData);
+        RETURN_STRING(retval.c_str());
+    }
 }
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_constructor, 0, 0, 5)
@@ -171,6 +196,11 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_insertdocs, 0, 0, 2)
     ZEND_ARG_ARRAY_INFO(0, data, 0)
 ZEND_END_ARG_INFO();
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_search, 0, 0, 2)
+    ZEND_ARG_INFO(0, database)
+    ZEND_ARG_ARRAY_INFO(0, query, 0)
+ZEND_END_ARG_INFO();
+
 static const zend_function_entry request_methods[] = {
     PHP_ME(Request, __construct, arginfo_constructor, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
     PHP_ME(Request, uuids, arginfo_uuids, ZEND_ACC_PUBLIC)
@@ -178,6 +208,7 @@ static const zend_function_entry request_methods[] = {
     PHP_ME(Request, allDbs, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Request, allDocs, arginfo_alldocs, ZEND_ACC_PUBLIC)
     PHP_ME(Request, insertDocs, arginfo_insertdocs, ZEND_ACC_PUBLIC)
+    PHP_ME(Request, search, arginfo_search, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 

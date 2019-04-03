@@ -188,3 +188,29 @@ $couch->insertDocs('your-database', [
     ]
 ]); //outputs true or false
 ```
+
+### search
+
+```
+search(string $database, array $query): string
+```
+
+**Argument(s):**
+
+- ***database (string)*** - The name of the database
+- ***query (array)*** - The search query to execute
+
+Performs a Mango-query-powered search.
+
+```php
+...
+$github = $couch->search('your-database', [
+    'selector'              => [
+        'name' => ['$regex' => '(?i)ich']
+    ],
+    'fields'                => ['_id', 'name', 'github'],
+    'execution_stats'       => 'true'
+]);
+
+var_dump(json_decode($github)); //returns a user object with specified fields
+```

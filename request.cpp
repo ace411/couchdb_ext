@@ -75,6 +75,13 @@ void appMethod(C curl, L method, S &data)
     }
 }
 
+template<typename C, typename S>
+void appCert(C curl, S &url)
+{
+    if (!checkStrExists<const std::string>("localhost", url)) 
+        curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem");
+}
+
 template<typename T>
 void phpCurlError(T code)
 {
@@ -142,6 +149,7 @@ auto curlRequest(S &url, L method, S &credentials, S &data, L timeout) -> std::s
         appHeaders<CURL *>(curl);
         appAuth<CURL *, const std::string>(curl, credentials, url);
         appMethod<CURL *, long, const std::string>(curl, method, data);
+        appCert<CURL *, const std::string>(curl, url);
 
         resCode = curl_easy_perform(curl);
         if (resCode != CURLE_OK)
@@ -239,4 +247,11 @@ bool Request::insertDocs(const std::string &database, const std::string &data) c
     std::string result = postRequest<const std::string, long>(reqUri, credentials, data, timeout);
 
     return checkStrExists<const std::string>("\"ok\"", result);
+}
+
+std::string Request::search(const std::string &database, const std::string &query) const
+{
+    std::string reqUri = concat<std::string, StrArgs>("/", {baseUri, database, "_find"});
+
+    return postRequest<const std::string, long>(reqUri, credentials, query, timeout);
 }
