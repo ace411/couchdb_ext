@@ -4,11 +4,9 @@ This version of the extension is one written primarily in C++ but with C binding
 
 ## Requirements
 
-- [PHP-CPP](https://www.php-cpp.com/)
-
 - [libcurl](https://https://curl.haxx.se/libcurl/)
 
-- PHP 7.1 or greater (Preferably a Non Thread-Safe version)
+- PHP 7.3 or greater (Preferably a Non Thread-Safe version)
 
 ## Installation
 
@@ -36,7 +34,7 @@ make test
 
 ## Rationale
 
-I recently published the fauxton API client, an asynchronous - non-blocking IO solution which is relatively more performant than the synchronous version I wrote earlier.
+I recently published the [fauxton API client](https://github.com/php-api-clients/fauxton), an asynchronous - non-blocking IO solution which is relatively more performant than the [synchronous version](https://github.com/ace411/fauxton-client) I wrote earlier.
 
 Also, there exists an [article](https://medium.com/@agiroLoki/a-potential-php-extension-for-couchdb-9604cda48f27) whose premise is farther justifying this undertaking.
 
@@ -112,7 +110,9 @@ Checks if the database at the constructor-specified location is present.
 
 ```php
 ...
-$couch->isAvailable(); //returns true or false
+if ($couch->isAvailable()) {
+    echo $couch->allDocs('your-database');
+} 
 ```
 
 ### uuids
@@ -172,4 +172,33 @@ echo $couch->allDocs('your-database', [
     'include_docs' => 'true',
     'descending' => 'true' 
 ]);
+```
+
+### insertDocs
+
+```
+insertDocs(string $database, array $data): bool
+```
+
+**Argument(s):**
+
+- ***database (string)*** - The name of the database
+- ***data (array)*** - The data to insert in the database
+
+> Note: Please include the 'docs' key in the $data array to preempt a false response
+
+Inserts data in a database.
+
+```php
+...
+$couch->insertDocs('your-database', [
+    'docs' => [
+        [
+            'name'      => 'Michael',
+            'github'    => '@ace411',
+            'twitter'   => '@agiroLoki' 
+        ],
+        ...
+    ]
+]); //outputs true or false
 ```

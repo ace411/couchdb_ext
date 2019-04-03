@@ -78,7 +78,8 @@ PHP_METHOD(Request, allDbs)
     ZEND_PARSE_PARAMETERS_NONE(); 
 
     intern = Z_TSTOBJ_P(id);
-    if (intern != NULL) {
+    if (intern != NULL) 
+    {
         std::string retval = intern->request->allDbs();
         RETURN_STRING(retval.c_str())
     }
@@ -121,6 +122,33 @@ PHP_METHOD(Request, allDocs)
     }
 }
 
+PHP_METHOD(Request, insertDocs)
+{
+    zend_string *database;
+    zval *docData;
+    smart_str jsonData = {0};
+
+    zval *id = getThis();
+    request_object *intern;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_STR(database)
+        Z_PARAM_ARRAY(docData)
+    ZEND_PARSE_PARAMETERS_END();
+
+    zend_string_free(docsKey);
+    php_json_encode(&jsonData, docData, 0);
+    smart_str_0(&jsonData);
+
+    intern = Z_TSTOBJ_P(id);
+    if (intern != NULL)
+    {
+        bool retval = intern->request->insertDocs(ZSTR_VAL(database), ZSTR_VAL(jsonData.s));
+        smart_str_free(&jsonData);
+        RETURN_BOOL(retval);
+    } 
+}
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_constructor, 0, 0, 5)
     ZEND_ARG_INFO(0, host)
     ZEND_ARG_INFO(0, user)
@@ -138,12 +166,18 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_alldocs, 0, 0, 2)
     ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO();
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_insertdocs, 0, 0, 2)
+    ZEND_ARG_INFO(0, database)
+    ZEND_ARG_ARRAY_INFO(0, data, 0)
+ZEND_END_ARG_INFO();
+
 static const zend_function_entry request_methods[] = {
     PHP_ME(Request, __construct, arginfo_constructor, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
     PHP_ME(Request, uuids, arginfo_uuids, ZEND_ACC_PUBLIC)
     PHP_ME(Request, isAvailable, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Request, allDbs, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Request, allDocs, arginfo_alldocs, ZEND_ACC_PUBLIC)
+    PHP_ME(Request, insertDocs, arginfo_insertdocs, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 

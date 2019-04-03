@@ -18,6 +18,7 @@ class Request
         std::string uuids(long count) const;
         std::string allDbs() const;
         std::string allDocs(const std::string &database, const std::string &params) const;
+        bool insertDocs(const std::string &database, const std::string &data) const;
         bool isAvailable() const;
 };
 
