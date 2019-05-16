@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/ace411/couchdb_ext.svg?branch=master)](https://travis-ci.org/ace411/couchdb_ext)
 
-This version of the extension is one written primarily in C++ but with C bindings.
+A simple PHP extension for CouchDB.
 
 ## Requirements
 
@@ -213,4 +213,29 @@ $github = $couch->search('your-database', [
 ]);
 
 var_dump(json_decode($github)); //returns a user object with specified fields
+```
+
+### createDdoc
+
+```
+createDdoc(string $database, string $ddoc, array $options): bool
+```
+
+**Argument(s):**
+
+- ***database (string)*** - The name of the database
+- ***ddoc (string)*** - The name of the design document
+- ***options (array)*** - ddoc options list (See documentation)
+
+Creates a design document.
+
+```php
+...
+$couch->createDdoc('testdb', 'profileDoc', [
+    'views' => [
+        'github-view' => [
+            'map' => 'function (doc) { emit(doc._id, doc.github) }'
+        ]
+    ]
+]);
 ```

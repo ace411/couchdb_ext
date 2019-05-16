@@ -19,6 +19,7 @@ class Request
         std::string allDbs() const;
         std::string allDocs(const std::string &database, const std::string &params) const;
         std::string search(const std::string &database, const std::string &query) const;
+        bool createDdoc(const std::string &database, const std::string &ddoc, const std::string &docData) const;
         bool insertDocs(const std::string &database, const std::string &data) const;
         bool isAvailable() const;
 };

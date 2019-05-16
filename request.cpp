@@ -2,12 +2,15 @@
 #include <ext/spl/spl_exceptions.h>
 #include <curl/curl.h>
 #include <initializer_list>
+#include <future>
+#include <thread>
 #include <tuple>
 #define GET_OPT 1
 #define PUT_OPT 2
 #define POST_OPT 3
 
 typedef size_t(*CURL_WRITEFUNCTION_PTR)(char *, size_t, size_t, std::string *);
+//typedef size_t(*CURL_READFUNCTION_PTR)(void *, size_t, size_t, void *);
 typedef std::initializer_list<std::string> StrArgs;
 typedef std::tuple<std::string, std::string> StrTuple;
 
@@ -60,7 +63,7 @@ void appMethod(C curl, L method, S &data)
     switch (method)
     {
         case PUT_OPT:
-            curl_easy_setopt(curl, CURLOPT_PUT, 1L);
+            curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
             break;
 
@@ -133,8 +136,7 @@ auto curlRequest(S &url, L method, S &credentials, S &data, L timeout) -> std::s
 
     if (curl) 
     {
-        curl_easy_setopt(
-            curl, 
+        curl_easy_setopt(curl, 
             CURLOPT_WRITEFUNCTION, 
             static_cast<CURL_WRITEFUNCTION_PTR>([](char * contents, size_t size, size_t nmemb, std::string * data) -> size_t {
                 size_t newSize = size * nmemb;
@@ -146,16 +148,17 @@ auto curlRequest(S &url, L method, S &credentials, S &data, L timeout) -> std::s
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
+        curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
         appHeaders<CURL *>(curl);
         appAuth<CURL *, const std::string>(curl, credentials, url);
         appMethod<CURL *, long, const std::string>(curl, method, data);
         appCert<CURL *, const std::string>(curl, url);
 
         resCode = curl_easy_perform(curl);
+
         if (resCode != CURLE_OK)
-        {
             phpCurlError<CURLcode>(resCode);
-        }
+        
         curl_easy_cleanup(curl);
     }
     curl_global_cleanup();
@@ -163,15 +166,25 @@ auto curlRequest(S &url, L method, S &credentials, S &data, L timeout) -> std::s
 }
 
 template<typename S, typename L>
+auto futureCurl(S &url, L method, S &credentials, S &data, L timeout) -> std::string
+{
+    std::future<std::string> future = std::async(std::launch::async, [=]{
+        return curlRequest<const std::string, long>(url, method, credentials, data, timeout); });
+
+    future.wait();
+    return future.get();
+}
+
+template<typename S, typename L>
 auto getRequest(S &url, S &credentials, L timeout) -> std::string
 {
-    return curlRequest<const std::string, long>(url, GET_OPT, credentials, "", timeout);
+    return futureCurl<const std::string, long>(url, GET_OPT, credentials, "", timeout);
 }
 
 template<typename S, typename L>
 auto postRequest(S &url, S &credentials, S &data, L timeout) -> std::string
 {
-    return curlRequest<const std::string, long>(url, POST_OPT, credentials, data, timeout);
+    return futureCurl<const std::string, long>(url, POST_OPT, credentials, data, timeout);
 }
 
 template<typename S, typename L>
@@ -254,4 +267,14 @@ std::string Request::search(const std::string &database, const std::string &quer
     std::string reqUri = concat<std::string, StrArgs>("/", {baseUri, database, "_find"});
 
     return postRequest<const std::string, long>(reqUri, credentials, query, timeout);
+}
+
+bool Request::createDdoc(const std::string &database, 
+    const std::string &ddoc, 
+    const std::string &docData) const
+{
+    std::string reqUri = concat<std::string, StrArgs>("/", {baseUri, database, "_design", ddoc});
+    std::string result = curlRequest<const std::string, long>(reqUri, PUT_OPT, credentials, docData, timeout);
+    
+    return checkStrExists<const std::string>("\"ok\"", result);
 }
