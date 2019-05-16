@@ -11,11 +11,14 @@
 /include/
 /modules/
 
-/*.guess
-/*.log
-/*.lo
-/*.la
-/*.out
+*.guess
+*.log
+*.lo
+*.la
+*.out
+*.exp
+*.diff
+*.sh
 
 /config.h*
 /config.nice
