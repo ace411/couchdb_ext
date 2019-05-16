@@ -6,6 +6,8 @@ A simple PHP extension for CouchDB.
 
 ## Requirements
 
+- [ext-json](https://www.php.net/manual/en/book.json.php)
+
 - [libcurl](https://https://curl.haxx.se/libcurl/)
 
 - PHP 7.3 or greater (Preferably a Non Thread-Safe version)
