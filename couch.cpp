@@ -88,9 +88,11 @@ PHP_METHOD(Request, allDbs)
 PHP_METHOD(Request, allDocs)
 {
     zend_string *database;
-    HashTable *queryParams;
-    zend_string *skey;
+    std::string errStr("");
     zval *val;
+    char *argSep = NULL;
+    zval *queryParams;
+
     smart_str queryBuild = {0};
 
     zval *id = getThis();
@@ -98,32 +100,23 @@ PHP_METHOD(Request, allDocs)
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
         Z_PARAM_STR(database)
-        Z_PARAM_ARRAY_HT(queryParams)
+        Z_PARAM_ARRAY(queryParams)
     ZEND_PARSE_PARAMETERS_END();
 
-    ZEND_HASH_FOREACH_STR_KEY_VAL(queryParams, skey, val) {
-        zval dup;
-        ZVAL_COPY_VALUE(&dup, val);
-        convert_to_cstring(&dup);
-        smart_str_appends(&queryBuild, ZSTR_VAL(skey));
-        smart_str_appendc(&queryBuild, '=');
-        smart_str_appends(&queryBuild, Z_STRVAL(dup));
-        smart_str_appendc(&queryBuild, '&');
-        zval_dtor(&dup);
-    } ZEND_HASH_FOREACH_END();
-    
+    if (zend_hash_num_elements(HASH_OF(queryParams)) == 0)
+        RETURN_STRING(errStr.c_str());
+
+    if (php_url_encode_hash_ex(HASH_OF(queryParams), &queryBuild, NULL, 0, NULL, 0, NULL, 0, (Z_TYPE_P(queryParams) == IS_OBJECT ? queryParams : NULL), argSep, 1) == FAILURE)
+        RETURN_STRING(errStr.c_str());
+
     smart_str_0(&queryBuild);
-    zval_dtor(val);
-    zend_string_release(skey);
 
     intern = Z_TSTOBJ_P(id);
-    if (intern != NULL) {
+    if (intern != NULL)
+    {
         std::string retval = intern->request->allDocs(ZSTR_VAL(database), ZSTR_VAL(queryBuild.s));
         smart_str_free(&queryBuild);
         efree(queryBuild.s);
-        zend_hash_destroy(queryParams);
-        FREE_HASHTABLE(queryParams);
-        zend_string_release(database);
         RETURN_STRING(retval.c_str());
     }
 }
@@ -132,6 +125,7 @@ PHP_METHOD(Request, insertDocs)
 {
     zend_string *database;
     zval *docData;
+    bool errRetval(false);
     smart_str jsonData = {0};
 
     zval *id = getThis();
@@ -142,6 +136,9 @@ PHP_METHOD(Request, insertDocs)
         Z_PARAM_ARRAY(docData)
     ZEND_PARSE_PARAMETERS_END();
 
+    if (zend_hash_num_elements(HASH_OF(docData)) == 0)
+        RETURN_BOOL(errRetval);
+
     php_json_encode(&jsonData, docData, 0);
     smart_str_0(&jsonData);
 
@@ -150,6 +147,7 @@ PHP_METHOD(Request, insertDocs)
     {
         bool retval = intern->request->insertDocs(ZSTR_VAL(database), ZSTR_VAL(jsonData.s));
         smart_str_free(&jsonData);
+        efree(jsonData.s);
         RETURN_BOOL(retval);
     }
 }

@@ -1,10 +1,10 @@
 --TEST--
-Extension outputs error message whenever one attempts to insert empty list
+Extension outputs CouchDB error whenever search array is empty
 --FILE--
 <?php
 require_once 'config.php';
 
-$res = $couch->search('testdb', []);
+$res = json_decode($couch->search('testdb', []), true);
 var_dump(key_exists('error', $res));
 ?>
 --EXPECT--
