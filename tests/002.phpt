@@ -2,7 +2,8 @@
 Check if CouchDB is available
 --FILE--
 <?php
-$couch = new CouchDb('localhost', '', '', 5984, 60);
+require_once 'config.php';
+
 echo gettype($couch->isAvailable());
 ?>
 --EXPECT--
