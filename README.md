@@ -233,11 +233,36 @@ Creates a design document.
 
 ```php
 ...
-$couch->createDdoc('testdb', 'profileDoc', [
-    'views' => [
+$couch->createDdoc('your-database', 'profileDoc', [
+    'language'  => 'javascript',
+    'views'     => [
         'github-view' => [
             'map' => 'function (doc) { emit(doc._id, doc.github) }'
         ]
     ]
+]);
+```
+
+### queryView
+
+```
+queryView(string $database, string $ddoc, string $view, array $opts): string
+```
+
+**Argument(s):**
+
+- ***database (string)*** - The name of the database
+- ***ddoc (string)*** - The name of the design document
+- ***view (string)*** - The view to query
+- ***options (array)*** - View query options (See CouchDB documentation)
+
+Queries a view in a specified database.
+
+```php
+...
+['key' => $key, 'value' => $val] = $couch->queryView('your-database', 'profileDoc', 'github-view', [
+    'descending'    => 'true',
+    'conflicts'     => 'false',
+    'update'        => 'true'
 ]);
 ```
