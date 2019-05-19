@@ -26,7 +26,7 @@ Upon successful installation of libcurl, type the following - also in a console 
 
 ```
 phpize
-./configure --enable-couchdb_ext CFLAGS="-lcurl"
+./configure --enable-couchdb_ext CFLAGS="-lcurl -lpthread"
 make && sudo make install
 ```
 

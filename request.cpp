@@ -10,7 +10,6 @@
 #define POST_OPT 3
 
 typedef size_t(*CURL_WRITEFUNCTION_PTR)(char *, size_t, size_t, std::string *);
-//typedef size_t(*CURL_READFUNCTION_PTR)(void *, size_t, size_t, void *);
 typedef std::initializer_list<std::string> StrArgs;
 typedef std::tuple<std::string, std::string> StrTuple;
 
@@ -277,4 +276,19 @@ bool Request::createDdoc(const std::string &database,
     std::string result = curlRequest<const std::string, long>(reqUri, PUT_OPT, credentials, docData, timeout);
     
     return checkStrExists<const std::string>("\"ok\"", result);
+}
+
+std::string Request::queryView(const std::string &database, 
+    const std::string &ddoc,
+    const std::string &view,
+    const std::string &params) const
+{
+    std::string reqUri = concat<std::string, StrArgs>("/", {baseUri, 
+        database, 
+        "_design", 
+        ddoc, 
+        "_view", 
+        concat<std::string, StrArgs>("?", {view, remAmpersand<std::string>(params)})});
+
+    return getRequest<const std::string, long>(reqUri, credentials, timeout);
 }

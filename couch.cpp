@@ -109,15 +109,21 @@ PHP_METHOD(Request, allDocs)
         smart_str_appendc(&queryBuild, '=');
         smart_str_appends(&queryBuild, Z_STRVAL(dup));
         smart_str_appendc(&queryBuild, '&');
+        zval_dtor(&dup);
     } ZEND_HASH_FOREACH_END();
     
     smart_str_0(&queryBuild);
+    zval_dtor(val);
+    zend_string_release(skey);
 
     intern = Z_TSTOBJ_P(id);
     if (intern != NULL) {
         std::string retval = intern->request->allDocs(ZSTR_VAL(database), ZSTR_VAL(queryBuild.s));
         smart_str_free(&queryBuild);
+        efree(queryBuild.s);
+        zend_hash_destroy(queryParams);
         FREE_HASHTABLE(queryParams);
+        zend_string_release(database);
         RETURN_STRING(retval.c_str());
     }
 }
@@ -194,10 +200,49 @@ PHP_METHOD(Request, createDdoc)
     smart_str_0(&jsonData);
 
     intern = Z_TSTOBJ_P(id);
-    if (intern != NULL) {
+    if (intern != NULL) 
+    {
         bool retval = intern->request->createDdoc(ZSTR_VAL(database), ZSTR_VAL(ddoc), ZSTR_VAL(jsonData.s));
         smart_str_free(&jsonData);
         RETURN_BOOL(retval);
+    }
+}
+
+PHP_METHOD(Request, queryView)
+{
+    zval *queryData;
+    zend_string *database;
+    zend_string *ddoc;
+    zend_string *view;
+    std::string errResult("");
+    char *argSep = NULL;
+    smart_str queryStr = {0};
+    
+    zval *id = getThis();
+    request_object *intern;
+
+    ZEND_PARSE_PARAMETERS_START(4, 4)
+        Z_PARAM_STR(database)
+        Z_PARAM_STR(ddoc)
+        Z_PARAM_STR(view)
+        Z_PARAM_ARRAY(queryData)
+    ZEND_PARSE_PARAMETERS_END();
+
+    if (Z_TYPE_P(queryData) != IS_ARRAY || zend_hash_num_elements(HASH_OF(queryData)) == 0)
+        RETURN_STRING(errResult.c_str());
+
+    if (php_url_encode_hash_ex(HASH_OF(queryData), &queryStr, NULL, 0, NULL, 0, NULL, 0, (Z_TYPE_P(queryData) == IS_OBJECT ? queryData : NULL), argSep, 1) == FAILURE)
+        RETURN_STRING(errResult.c_str());
+
+    smart_str_0(&queryStr);
+
+    intern = Z_TSTOBJ_P(id);
+    if (intern != NULL)
+    {
+        std::string retval = intern->request->queryView(ZSTR_VAL(database), ZSTR_VAL(ddoc), ZSTR_VAL(view), ZSTR_VAL(queryStr.s));
+        smart_str_free(&queryStr);
+        efree(queryStr.s);
+        RETURN_STRING(retval.c_str());
     }
 }
 
@@ -234,6 +279,13 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_createddoc, 0, 0, 3)
     ZEND_ARG_ARRAY_INFO(0, docdata, 0)
 ZEND_END_ARG_INFO();
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_queryview, 0, 0, 4)
+    ZEND_ARG_INFO(0, database)
+    ZEND_ARG_INFO(0, ddoc)
+    ZEND_ARG_INFO(0, view)
+    ZEND_ARG_ARRAY_INFO(0, params, 0)
+ZEND_END_ARG_INFO();
+
 static const zend_function_entry request_methods[] = {
     PHP_ME(Request, __construct, arginfo_constructor, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
     PHP_ME(Request, uuids, arginfo_uuids, ZEND_ACC_PUBLIC)
@@ -243,6 +295,7 @@ static const zend_function_entry request_methods[] = {
     PHP_ME(Request, insertDocs, arginfo_insertdocs, ZEND_ACC_PUBLIC)
     PHP_ME(Request, search, arginfo_search, ZEND_ACC_PUBLIC)
     PHP_ME(Request, createDdoc, arginfo_createddoc, ZEND_ACC_PUBLIC)
+    PHP_ME(Request, queryView, arginfo_queryview, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 
