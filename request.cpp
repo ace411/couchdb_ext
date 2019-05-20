@@ -181,6 +181,12 @@ auto getRequest(S &url, S &credentials, L timeout) -> std::string
 }
 
 template<typename S, typename L>
+auto putRequest(S &url, S &credentials, S &data, L timeout) -> std::string
+{
+    return futureCurl<const std::string, long>(url, PUT_OPT, credentials, data, timeout);
+}
+
+template<typename S, typename L>
 auto postRequest(S &url, S &credentials, S &data, L timeout) -> std::string
 {
     return futureCurl<const std::string, long>(url, POST_OPT, credentials, data, timeout);
@@ -273,7 +279,7 @@ bool Request::createDdoc(const std::string &database,
     const std::string &docData) const
 {
     std::string reqUri = concat<std::string, StrArgs>("/", {baseUri, database, "_design", ddoc});
-    std::string result = curlRequest<const std::string, long>(reqUri, PUT_OPT, credentials, docData, timeout);
+    std::string result = putRequest<const std::string, long>(reqUri, credentials, docData, timeout);
     
     return checkStrExists<const std::string>("\"ok\"", result);
 }
@@ -291,4 +297,12 @@ std::string Request::queryView(const std::string &database,
         concat<std::string, StrArgs>("?", {view, remAmpersand<std::string>(params)})});
 
     return getRequest<const std::string, long>(reqUri, credentials, timeout);
+}
+
+bool Request::createDb(const std::string &database) const
+{
+    std::string reqUri = concat<std::string, StrArgs>("/", {baseUri, database});
+    std::string result = putRequest<const std::string, long>(reqUri, credentials, "", timeout);
+
+    return checkStrExists<const std::string>("\"ok\"", result);
 }

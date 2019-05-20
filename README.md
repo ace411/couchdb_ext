@@ -120,6 +120,35 @@ Generates a specified number of Universally Unique Identifiers.
 echo $couch->uuids(4); //returns JSON string
 ```
 
+### createDb
+
+```
+createDb(string $database): bool
+```
+
+**Argument(s):**
+
+- ***database (string)*** - The name of the database
+
+Creates a database.
+
+```php
+...
+const DB_NAME = 'your-database';
+
+if ($couch->createDb(DB_NAME)) {
+    $couch->insertDocs(DB_NAME, [
+        'docs'  => [
+            [
+                'name'          => 'Bruno',
+                'facebook'      => 'agiroLoki'
+            ],
+            ...
+        ]
+    ]);
+}
+```
+
 ### allDbs
 
 ```

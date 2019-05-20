@@ -244,6 +244,24 @@ PHP_METHOD(Request, queryView)
     }
 }
 
+PHP_METHOD(Request, createDb)
+{
+    zend_string *database;
+    zval *id = getThis();
+    request_object *intern;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_STR(database)
+    ZEND_PARSE_PARAMETERS_END();
+
+    intern = Z_TSTOBJ_P(id);
+    if (intern != NULL)
+    {
+        RETURN_BOOL(intern->request->createDb(ZSTR_VAL(database)));
+        zend_string_release(database);
+    }
+}
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_constructor, 0, 0, 5)
     ZEND_ARG_INFO(0, host)
     ZEND_ARG_INFO(0, user)
@@ -284,6 +302,10 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_queryview, 0, 0, 4)
     ZEND_ARG_ARRAY_INFO(0, params, 0)
 ZEND_END_ARG_INFO();
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_createdb, 0, 0, 1)
+    ZEND_ARG_INFO(0, database)
+ZEND_END_ARG_INFO();
+
 static const zend_function_entry request_methods[] = {
     PHP_ME(Request, __construct, arginfo_constructor, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
     PHP_ME(Request, uuids, arginfo_uuids, ZEND_ACC_PUBLIC)
@@ -294,6 +316,7 @@ static const zend_function_entry request_methods[] = {
     PHP_ME(Request, search, arginfo_search, ZEND_ACC_PUBLIC)
     PHP_ME(Request, createDdoc, arginfo_createddoc, ZEND_ACC_PUBLIC)
     PHP_ME(Request, queryView, arginfo_queryview, ZEND_ACC_PUBLIC)
+    PHP_ME(Request, createDb, arginfo_createdb, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 

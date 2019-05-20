@@ -25,6 +25,7 @@ class Request
             const std::string &params) const;
         bool createDdoc(const std::string &database, const std::string &ddoc, const std::string &docData) const;
         bool insertDocs(const std::string &database, const std::string &data) const;
+        bool createDb(const std::string &database) const;
         bool isAvailable() const;
 };
 
