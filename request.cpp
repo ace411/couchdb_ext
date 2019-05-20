@@ -8,6 +8,7 @@
 #define GET_OPT 1
 #define PUT_OPT 2
 #define POST_OPT 3
+#define DEL_OPT 4
 
 typedef size_t(*CURL_WRITEFUNCTION_PTR)(char *, size_t, size_t, std::string *);
 typedef std::initializer_list<std::string> StrArgs;
@@ -64,6 +65,10 @@ void appMethod(C curl, L method, S &data)
         case PUT_OPT:
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+            break;
+
+        case DEL_OPT:
+            curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
             break;
 
         case POST_OPT:
@@ -187,6 +192,12 @@ auto putRequest(S &url, S &credentials, S &data, L timeout) -> std::string
 }
 
 template<typename S, typename L>
+auto delRequest(S &url, S &credentials, L timeout) -> std::string
+{
+    return futureCurl<const std::string, long>(url, DEL_OPT, credentials, "", timeout);
+}
+
+template<typename S, typename L>
 auto postRequest(S &url, S &credentials, S &data, L timeout) -> std::string
 {
     return futureCurl<const std::string, long>(url, POST_OPT, credentials, data, timeout);
@@ -303,6 +314,14 @@ bool Request::createDb(const std::string &database) const
 {
     std::string reqUri = concat<std::string, StrArgs>("/", {baseUri, database});
     std::string result = putRequest<const std::string, long>(reqUri, credentials, "", timeout);
+
+    return checkStrExists<const std::string>("\"ok\"", result);
+}
+
+bool Request::deleteOpt(const std::string &endpoint) const
+{
+    std::string reqUri = concat<std::string, StrArgs>("/", {baseUri, endpoint});
+    std::string result = delRequest<const std::string, long>(reqUri, credentials, timeout);
 
     return checkStrExists<const std::string>("\"ok\"", result);
 }

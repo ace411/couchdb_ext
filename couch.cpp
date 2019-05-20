@@ -266,6 +266,51 @@ PHP_METHOD(Request, createDb)
     }
 }
 
+PHP_METHOD(Request, _delete)
+{
+    long opt;
+    HashTable *opts;
+    zval *retOpt;
+    std::string strOpt("");
+
+    zval *id = getThis();
+    request_object *intern;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_LONG(opt)
+        Z_PARAM_ARRAY_HT(opts)
+    ZEND_PARSE_PARAMETERS_END();
+
+    if (zend_hash_num_elements(opts) == 0) 
+        RETURN_BOOL(false);
+
+    intern = Z_TSTOBJ_P(id);
+    if (intern != NULL)
+    {
+        switch (opt)
+        {
+            case COUCH_DEL_DB:
+                zend_string *hashkey;
+                hashkey = zend_string_init("database", (sizeof("database") - 1), 1);
+                retOpt = zend_hash_find(opts, hashkey);
+                if (!zend_hash_exists(opts, hashkey))
+                    RETURN_BOOL(false);
+                strOpt += Z_STRVAL_P(retOpt);
+                zend_string_release(hashkey);
+                break;
+
+            default:
+                RETURN_BOOL(false);
+                break;
+        }
+
+        RETURN_BOOL(intern->request->deleteOpt(strOpt));
+        
+        zend_hash_destroy(opts);
+        FREE_HASHTABLE(opts);
+    }
+}
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_constructor, 0, 0, 5)
     ZEND_ARG_INFO(0, host)
     ZEND_ARG_INFO(0, user)
@@ -310,6 +355,11 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_createdb, 0, 0, 1)
     ZEND_ARG_INFO(0, database)
 ZEND_END_ARG_INFO();
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_delete, 0, 0, 2)
+    ZEND_ARG_INFO(0, option)
+    ZEND_ARG_ARRAY_INFO(0, params, 0)
+ZEND_END_ARG_INFO();
+
 static const zend_function_entry request_methods[] = {
     PHP_ME(Request, __construct, arginfo_constructor, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
     PHP_ME(Request, uuids, arginfo_uuids, ZEND_ACC_PUBLIC)
@@ -321,6 +371,7 @@ static const zend_function_entry request_methods[] = {
     PHP_ME(Request, createDdoc, arginfo_createddoc, ZEND_ACC_PUBLIC)
     PHP_ME(Request, queryView, arginfo_queryview, ZEND_ACC_PUBLIC)
     PHP_ME(Request, createDb, arginfo_createdb, ZEND_ACC_PUBLIC)
+    PHP_ME(Request, _delete, arginfo_delete, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 
