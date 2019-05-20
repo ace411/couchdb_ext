@@ -2,6 +2,10 @@
 #include "request.h"
 #include "zend_smart_str.h"
 
+#define COUCH_DEL_DB 1
+#define COUCH_DEL_DOC 2
+#define COUCH_DEL_DDOC 3
+
 zend_object_handlers request_object_handlers;
 
 typedef struct _request_object {
@@ -27,7 +31,7 @@ PHP_METHOD(Request, __construct)
     zval *id = getThis();
     request_object *intern;
 
-    ZEND_PARSE_PARAMETERS_START(0, 5)
+    ZEND_PARSE_PARAMETERS_START(3, 5)
         Z_PARAM_STR(host)
         Z_PARAM_STR(user)
         Z_PARAM_STR(pwd)
@@ -366,6 +370,10 @@ PHP_MINIT_FUNCTION(request)
     request_object_handlers.dtor_obj = request_object_destroy;
 
     request_object_handlers.offset = XtOffsetOf(request_object, std);
+
+    REGISTER_LONG_CONSTANT("COUCH_DEL_DB", COUCH_DEL_DB, CONST_CS|CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("COUCH_DEL_DOC", COUCH_DEL_DOC, CONST_CS|CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("COUCH_DEL_DDOC", COUCH_DEL_DDOC, CONST_CS|CONST_PERSISTENT);
 
     return SUCCESS;
 }
