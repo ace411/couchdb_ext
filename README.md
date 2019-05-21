@@ -295,3 +295,30 @@ Queries a view in a specified database.
     'update'        => 'true'
 ]);
 ```
+
+### _delete
+
+```
+_delete(int option, array $params): bool
+```
+
+**Argument(s):**
+
+- ***option (int)*** Deletion option. Available options are ```COUCH_DEL_DB``` and ```COUCH_DEL_DOC```
+- ***params (array)*** Parameters for option-specific deletion (see table below)
+
+| Option | Parameters |
+|--------|------------|
+| ```COUCH_DEL_DB``` | database |
+| ```COUCH_DEL_DOC``` | database, _id, _rev |
+
+Deletes one of either a database or document.
+
+```php
+...
+$couch->_delete(COUCH_DEL_DOC, [
+    'database'  => 'a-database',
+    '_id'       => 'doc-identifier',
+    '_rev'      => 'doc-rev'
+]);
+```
