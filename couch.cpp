@@ -1,6 +1,7 @@
 #include "php_couchdb_ext.h"
 #include "request.h"
 #include "zend_smart_str.h"
+#include <tuple>
 
 #define COUCH_DEL_DB 1
 #define COUCH_DEL_DOC 2
@@ -59,7 +60,7 @@ PHP_METHOD(Request, uuids)
     {
         std::string retval = intern->request->uuids(idCount);
         RETURN_STRING(retval.c_str());
-    } 
+    }
 }
 
 PHP_METHOD(Request, isAvailable)
@@ -79,10 +80,10 @@ PHP_METHOD(Request, allDbs)
     zval *id = getThis();
     request_object *intern;
 
-    ZEND_PARSE_PARAMETERS_NONE(); 
+    ZEND_PARSE_PARAMETERS_NONE();
 
     intern = Z_TSTOBJ_P(id);
-    if (intern != NULL) 
+    if (intern != NULL)
     {
         std::string retval = intern->request->allDbs();
         RETURN_STRING(retval.c_str())
@@ -202,7 +203,7 @@ PHP_METHOD(Request, createDdoc)
     smart_str_0(&jsonData);
 
     intern = Z_TSTOBJ_P(id);
-    if (intern != NULL) 
+    if (intern != NULL)
     {
         bool retval = intern->request->createDdoc(ZSTR_VAL(database), ZSTR_VAL(ddoc), ZSTR_VAL(jsonData.s));
         smart_str_free(&jsonData);
@@ -219,7 +220,7 @@ PHP_METHOD(Request, queryView)
     std::string errResult("");
     char *argSep = NULL;
     smart_str queryStr = {0};
-    
+
     zval *id = getThis();
     request_object *intern;
 
@@ -271,6 +272,11 @@ PHP_METHOD(Request, _delete)
     long opt;
     HashTable *opts;
     zval *retOpt;
+    zval *_retOpt;
+    zval *__retOpt;
+    zend_string *dbkey;
+    zend_string *idkey;
+    zend_string *revkey;
     std::string strOpt("");
 
     zval *id = getThis();
@@ -281,8 +287,22 @@ PHP_METHOD(Request, _delete)
         Z_PARAM_ARRAY_HT(opts)
     ZEND_PARSE_PARAMETERS_END();
 
-    if (zend_hash_num_elements(opts) == 0) 
+    if (zend_hash_num_elements(opts) == 0)
         RETURN_BOOL(false);
+
+    dbkey = zend_string_init("database", (sizeof("database") - 1), 1);
+    revkey = zend_string_init("_rev", (sizeof("_rev") - 1), 1);
+    idkey = zend_string_init("_id", (sizeof("_id") - 1), 1);
+
+    if (!zend_hash_exists(opts, dbkey))
+        RETURN_BOOL(false);
+
+    retOpt = zend_hash_find(opts, dbkey);
+    _retOpt = zend_hash_find(opts, revkey); 
+    __retOpt = zend_hash_find(opts, idkey);
+
+    strOpt += Z_STRVAL_P(retOpt);
+    zend_string_release(dbkey);
 
     intern = Z_TSTOBJ_P(id);
     if (intern != NULL)
@@ -290,13 +310,18 @@ PHP_METHOD(Request, _delete)
         switch (opt)
         {
             case COUCH_DEL_DB:
-                zend_string *hashkey;
-                hashkey = zend_string_init("database", (sizeof("database") - 1), 1);
-                retOpt = zend_hash_find(opts, hashkey);
-                if (!zend_hash_exists(opts, hashkey))
+                RETURN_BOOL(intern->request->deleteOpt(strOpt));
+                break;
+
+            case COUCH_DEL_DOC:
+                if (!zend_hash_exists(opts, idkey) || !zend_hash_exists(opts, revkey))
                     RETURN_BOOL(false);
-                strOpt += Z_STRVAL_P(retOpt);
-                zend_string_release(hashkey);
+                    
+                zend_string_release(idkey);
+                zend_string_release(revkey);
+
+                strOpt += std::string("/") + Z_STRVAL_P(__retOpt) + "?rev=" + Z_STRVAL_P(_retOpt);
+                RETURN_BOOL(intern->request->deleteOpt(strOpt));
                 break;
 
             default:
@@ -304,8 +329,6 @@ PHP_METHOD(Request, _delete)
                 break;
         }
 
-        RETURN_BOOL(intern->request->deleteOpt(strOpt));
-        
         zend_hash_destroy(opts);
         FREE_HASHTABLE(opts);
     }
@@ -413,10 +436,10 @@ PHP_MINIT_FUNCTION(request)
     request_ce = zend_register_internal_class(&ce TSRMLS_CC);
     request_ce->create_object = request_object_new;
 
-    memcpy(&request_object_handlers, 
-        zend_get_std_object_handlers(), 
+    memcpy(&request_object_handlers,
+        zend_get_std_object_handlers(),
         sizeof(request_object_handlers));
-    
+
     request_object_handlers.free_obj = request_object_free;
     request_object_handlers.dtor_obj = request_object_destroy;
 
@@ -424,7 +447,6 @@ PHP_MINIT_FUNCTION(request)
 
     REGISTER_LONG_CONSTANT("COUCH_DEL_DB", COUCH_DEL_DB, CONST_CS|CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("COUCH_DEL_DOC", COUCH_DEL_DOC, CONST_CS|CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("COUCH_DEL_DDOC", COUCH_DEL_DDOC, CONST_CS|CONST_PERSISTENT);
 
     return SUCCESS;
 }
