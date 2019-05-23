@@ -1,7 +1,5 @@
 #include "php_couchdb_ext.h"
 #include "request.h"
-#include "zend_smart_str.h"
-#include <tuple>
 
 #define COUCH_DEL_DB 1
 #define COUCH_DEL_DOC 2
