@@ -304,8 +304,8 @@ _delete(int option, array $params): bool
 
 **Argument(s):**
 
-- ***option (int)*** Deletion option. Available options are ```COUCH_DEL_DB``` and ```COUCH_DEL_DOC```
-- ***params (array)*** Parameters for option-specific deletion (see table below)
+- ***option (int)*** - Deletion option. Available options are ```COUCH_DEL_DB``` and ```COUCH_DEL_DOC```
+- ***params (array)*** - Parameters for option-specific deletion (see table below)
 
 | Option | Parameters |
 |--------|------------|
@@ -320,5 +320,37 @@ $couch->_delete(COUCH_DEL_DOC, [
     'database'  => 'a-database',
     '_id'       => 'doc-identifier',
     '_rev'      => 'doc-rev'
+]);
+```
+
+### update
+
+```
+update(string $database, int $option, array $data): bool
+```
+
+**Argument(s):**
+
+- ***database (string)*** - The name of the database
+- ***option (int)*** - Update option. Available options are ```COUCH_UPDATE_SINGLE``` and ```COUCH_UPDATE_MULTIPLE```
+- ***data (array)*** - The data containing the update contents
+
+| Option | Required keys |
+|--------|------------|
+| ```COUCH_UPDATE_SINGLE``` | _id, _rev, doc |
+| ```COUCH_UPDATE_MULTIPLE``` | none |
+
+Updates the contents of a database.
+
+```php
+...
+$couch->update('your-database', COUCH_UPDATE_SINGLE, [
+    '_id'       => 'doc-identifier',
+    '_rev'      => 'doc-rev',
+    'doc'       => [
+        'firstname'     => 'Michael',
+        'lastname'      => 'Lochemem',
+        'twiter'        => '@agiroLoki'
+    ] 
 ]);
 ```

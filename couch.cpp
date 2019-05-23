@@ -7,6 +7,9 @@
 #define COUCH_DEL_DOC 2
 #define COUCH_DEL_DDOC 3
 
+#define COUCH_UPDATE_SINGLE 1
+#define COUCH_UPDATE_MULTIPLE 2
+
 zend_object_handlers request_object_handlers;
 
 typedef struct _request_object {
@@ -316,7 +319,7 @@ PHP_METHOD(Request, _delete)
             case COUCH_DEL_DOC:
                 if (!zend_hash_exists(opts, idkey) || !zend_hash_exists(opts, revkey))
                     RETURN_BOOL(false);
-                    
+
                 zend_string_release(idkey);
                 zend_string_release(revkey);
 
@@ -331,6 +334,98 @@ PHP_METHOD(Request, _delete)
 
         zend_hash_destroy(opts);
         FREE_HASHTABLE(opts);
+    }
+}
+
+PHP_METHOD(Request, update)
+{
+    zend_string *database;
+    long opt;
+    zval *update;
+
+    zend_string *idkey;
+    zend_string *revkey;
+
+    smart_str docData = {0};
+
+    zval *id = getThis();
+    request_object *intern;
+
+    ZEND_PARSE_PARAMETERS_START(3, 3)
+        Z_PARAM_STR(database)
+        Z_PARAM_LONG(opt)
+        Z_PARAM_ARRAY(update)
+    ZEND_PARSE_PARAMETERS_END();
+
+    if (zend_hash_num_elements(HASH_OF(update)) == 0)
+        RETURN_BOOL(false);
+
+    idkey = zend_string_init("_id", sizeof("_id") - 1, 1);
+    revkey = zend_string_init("_rev", sizeof("_rev") - 1, 1);
+
+    intern = Z_TSTOBJ_P(id);
+
+    if (intern != NULL)
+    {
+        switch (opt)
+        {
+            case COUCH_UPDATE_SINGLE:
+                zend_string *dockey;
+
+                zval *_opt;
+                zval *__opt;
+                zval *___opt;
+
+                dockey = zend_string_init("doc", sizeof("doc") - 1, 1);
+
+                if (!zend_hash_exists(HASH_OF(update), idkey) || !zend_hash_exists(HASH_OF(update), revkey) || !zend_hash_exists(HASH_OF(update), dockey))
+                    RETURN_BOOL(false);
+
+                _opt = zend_hash_find(HASH_OF(update), idkey);
+                __opt = zend_hash_find(HASH_OF(update), revkey);
+                ___opt = zend_hash_find(HASH_OF(update), dockey);
+                
+                if (Z_TYPE_P(___opt) != IS_ARRAY)
+                    RETURN_BOOL(false);
+
+                php_json_encode(&docData, ___opt, 0);
+                smart_str_0(&docData);
+
+                RETURN_BOOL(intern->request->updateSingle(ZSTR_VAL(database), 
+                    Z_STRVAL_P(_opt), 
+                    Z_STRVAL_P(__opt),
+                    ZSTR_VAL(docData.s)));                    
+                break;
+
+            case COUCH_UPDATE_MULTIPLE:                
+                zval *retval;
+                zval *_docs;
+
+                ZEND_HASH_FOREACH_VAL(HASH_OF(update), retval) {
+                    if (Z_TYPE_P(retval) != IS_ARRAY)
+                        RETURN_BOOL(false);
+
+                    if (!zend_hash_exists(Z_ARRVAL_P(retval), idkey) || !zend_hash_exists(Z_ARRVAL_P(retval), revkey))
+                        RETURN_BOOL(false);
+                } ZEND_HASH_FOREACH_END();
+
+                array_init(_docs);
+                add_assoc_zval(_docs, "docs", update);
+
+                php_json_encode(&docData, _docs, 0);
+                smart_str_0(&docData);
+
+                RETURN_BOOL(intern->request->insertDocs(ZSTR_VAL(database), ZSTR_VAL(docData.s)));
+                break;
+
+
+            default:
+                RETURN_BOOL(false);
+                break;
+        }
+
+        smart_str_free(&docData);
+        efree(docData.s);
     }
 }
 
@@ -383,6 +478,12 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_delete, 0, 0, 2)
     ZEND_ARG_ARRAY_INFO(0, params, 0)
 ZEND_END_ARG_INFO();
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_update, 0, 0, 3)
+    ZEND_ARG_INFO(0, database)
+    ZEND_ARG_INFO(0, option)
+    ZEND_ARG_ARRAY_INFO(0, update, 0)
+ZEND_END_ARG_INFO();
+
 static const zend_function_entry request_methods[] = {
     PHP_ME(Request, __construct, arginfo_constructor, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
     PHP_ME(Request, uuids, arginfo_uuids, ZEND_ACC_PUBLIC)
@@ -395,6 +496,7 @@ static const zend_function_entry request_methods[] = {
     PHP_ME(Request, queryView, arginfo_queryview, ZEND_ACC_PUBLIC)
     PHP_ME(Request, createDb, arginfo_createdb, ZEND_ACC_PUBLIC)
     PHP_ME(Request, _delete, arginfo_delete, ZEND_ACC_PUBLIC)
+    PHP_ME(Request, update, arginfo_update, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 
@@ -447,6 +549,8 @@ PHP_MINIT_FUNCTION(request)
 
     REGISTER_LONG_CONSTANT("COUCH_DEL_DB", COUCH_DEL_DB, CONST_CS|CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("COUCH_DEL_DOC", COUCH_DEL_DOC, CONST_CS|CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("COUCH_UPDATE_SINGLE", COUCH_UPDATE_SINGLE, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("COUCH_UPDATE_MULTIPLE", COUCH_UPDATE_MULTIPLE, CONST_CS | CONST_PERSISTENT);
 
     return SUCCESS;
 }
