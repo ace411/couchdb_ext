@@ -325,3 +325,16 @@ bool Request::deleteOpt(const std::string &endpoint) const
 
     return checkStrExists<const std::string>("\"ok\"", result);
 }
+
+bool Request::updateSingle(const std::string &database,
+    const std::string &idkey,
+    const std::string &revkey,
+    const std::string &data) const
+{
+    auto reqUri = concat<std::string, StrArgs>("?", {concat<std::string, StrArgs>("/", {baseUri, database, idkey}),
+        concat<std::string, StrArgs>("=", {"rev", revkey})});
+    auto result = putRequest<const std::string, long>(reqUri, credentials, data, timeout);
+
+    return checkStrExists<const std::string>("\"ok\"", result);
+    
+}

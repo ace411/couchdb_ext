@@ -27,6 +27,10 @@ class Request
         bool insertDocs(const std::string &database, const std::string &data) const;
         bool createDb(const std::string &database) const;
         bool deleteOpt(const std::string &endpoint) const;
+        bool updateSingle(const std::string &database,
+            const std::string &idkey,
+            const std::string &revkey,
+            const std::string &data) const;
         bool isAvailable() const;
 };
 
