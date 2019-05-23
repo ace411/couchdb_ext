@@ -289,11 +289,11 @@ Queries a view in a specified database.
 
 ```php
 ...
-['key' => $key, 'value' => $val] = $couch->queryView('your-database', 'profileDoc', 'github-view', [
+['key' => $key, 'value' => $val] = json_decode($couch->queryView('your-database', 'profileDoc', 'github-view', [
     'descending'    => 'true',
     'conflicts'     => 'false',
     'update'        => 'true'
-]);
+]), true);
 ```
 
 ### _delete
@@ -304,7 +304,7 @@ _delete(int option, array $params): bool
 
 **Argument(s):**
 
-- ***option (int)*** - Deletion option. Available options are ```COUCH_DEL_DB``` and ```COUCH_DEL_DOC```
+- ***option (integer)*** - Deletion option. Available options are ```COUCH_DEL_DB``` and ```COUCH_DEL_DOC```
 - ***params (array)*** - Parameters for option-specific deletion (see table below)
 
 | Option | Parameters |
@@ -332,7 +332,7 @@ update(string $database, int $option, array $data): bool
 **Argument(s):**
 
 - ***database (string)*** - The name of the database
-- ***option (int)*** - Update option. Available options are ```COUCH_UPDATE_SINGLE``` and ```COUCH_UPDATE_MULTIPLE```
+- ***option (integer)*** - Update option. Available options are ```COUCH_UPDATE_SINGLE``` and ```COUCH_UPDATE_MULTIPLE```
 - ***data (array)*** - The data containing the update contents
 
 | Option | Required keys |
