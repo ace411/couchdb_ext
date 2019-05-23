@@ -2,7 +2,7 @@
 Extension prints all the documents in a specific database
 --FILE--
 <?php
-$couch = new CouchDb('localhost', '', '', 5984, 60);
+require_once 'config.php';
 
 echo gettype($couch->allDocs('testdb', [
     'include_docs' => 'true',

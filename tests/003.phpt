@@ -2,7 +2,7 @@
 Extensions generates arbitrary number of unique identifiers.
 --FILE--
 <?php
-$couch = new CouchDb('localhost', '', '', 5984, 60);
+require_once 'config.php';
 
 echo gettype($couch->uuids(5));
 ?>

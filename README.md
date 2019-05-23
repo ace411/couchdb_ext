@@ -2,9 +2,11 @@
 
 [![Build Status](https://travis-ci.org/ace411/couchdb_ext.svg?branch=master)](https://travis-ci.org/ace411/couchdb_ext)
 
-This version of the extension is one written primarily in C++ but with C bindings.
+A simple PHP extension for CouchDB.
 
 ## Requirements
+
+- [ext-json](https://www.php.net/manual/en/book.json.php)
 
 - [libcurl](https://https://curl.haxx.se/libcurl/)
 
@@ -24,7 +26,7 @@ Upon successful installation of libcurl, type the following - also in a console 
 
 ```
 phpize
-./configure --enable-couchdb_ext CFLAGS="-lcurl"
+./configure --enable-couchdb_ext CFLAGS="-lcurl -lpthread"
 make && sudo make install
 ```
 
@@ -116,6 +118,35 @@ Generates a specified number of Universally Unique Identifiers.
 ```php
 ...
 echo $couch->uuids(4); //returns JSON string
+```
+
+### createDb
+
+```
+createDb(string $database): bool
+```
+
+**Argument(s):**
+
+- ***database (string)*** - The name of the database
+
+Creates a database.
+
+```php
+...
+const DB_NAME = 'your-database';
+
+if ($couch->createDb(DB_NAME)) {
+    $couch->insertDocs(DB_NAME, [
+        'docs'  => [
+            [
+                'name'          => 'Bruno',
+                'facebook'      => 'agiroLoki'
+            ],
+            ...
+        ]
+    ]);
+}
 ```
 
 ### allDbs
@@ -213,4 +244,113 @@ $github = $couch->search('your-database', [
 ]);
 
 var_dump(json_decode($github)); //returns a user object with specified fields
+```
+
+### createDdoc
+
+```
+createDdoc(string $database, string $ddoc, array $options): bool
+```
+
+**Argument(s):**
+
+- ***database (string)*** - The name of the database
+- ***ddoc (string)*** - The name of the design document
+- ***options (array)*** - ddoc options list (See documentation)
+
+Creates a design document.
+
+```php
+...
+$couch->createDdoc('your-database', 'profileDoc', [
+    'language'  => 'javascript',
+    'views'     => [
+        'github-view' => [
+            'map' => 'function (doc) { emit(doc._id, doc.github) }'
+        ]
+    ]
+]);
+```
+
+### queryView
+
+```
+queryView(string $database, string $ddoc, string $view, array $opts): string
+```
+
+**Argument(s):**
+
+- ***database (string)*** - The name of the database
+- ***ddoc (string)*** - The name of the design document
+- ***view (string)*** - The view to query
+- ***options (array)*** - View query options (See CouchDB documentation)
+
+Queries a view in a specified database.
+
+```php
+...
+['key' => $key, 'value' => $val] = json_decode($couch->queryView('your-database', 'profileDoc', 'github-view', [
+    'descending'    => 'true',
+    'conflicts'     => 'false',
+    'update'        => 'true'
+]), true);
+```
+
+### _delete
+
+```
+_delete(int option, array $params): bool
+```
+
+**Argument(s):**
+
+- ***option (integer)*** - Deletion option. Available options are ```COUCH_DEL_DB``` and ```COUCH_DEL_DOC```
+- ***params (array)*** - Parameters for option-specific deletion (see table below)
+
+| Option | Parameters |
+|--------|------------|
+| ```COUCH_DEL_DB``` | database |
+| ```COUCH_DEL_DOC``` | database, _id, _rev |
+
+Deletes one of either a database or document.
+
+```php
+...
+$couch->_delete(COUCH_DEL_DOC, [
+    'database'  => 'a-database',
+    '_id'       => 'doc-identifier',
+    '_rev'      => 'doc-rev'
+]);
+```
+
+### update
+
+```
+update(string $database, int $option, array $data): bool
+```
+
+**Argument(s):**
+
+- ***database (string)*** - The name of the database
+- ***option (integer)*** - Update option. Available options are ```COUCH_UPDATE_SINGLE``` and ```COUCH_UPDATE_MULTIPLE```
+- ***data (array)*** - The data containing the update contents
+
+| Option | Required keys |
+|--------|------------|
+| ```COUCH_UPDATE_SINGLE``` | _id, _rev, doc |
+| ```COUCH_UPDATE_MULTIPLE``` | none |
+
+Updates the contents of a database.
+
+```php
+...
+$couch->update('your-database', COUCH_UPDATE_SINGLE, [
+    '_id'       => 'doc-identifier',
+    '_rev'      => 'doc-rev',
+    'doc'       => [
+        'firstname'     => 'Michael',
+        'lastname'      => 'Lochemem',
+        'twiter'        => '@agiroLoki'
+    ] 
+]);
 ```

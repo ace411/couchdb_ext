@@ -10,12 +10,16 @@
 /build/
 /include/
 /modules/
+/vendor/
 
-/*.guess
-/*.log
-/*.lo
-/*.la
-/*.out
+*.guess
+*.log
+*.lo
+*.la
+*.out
+*.exp
+*.diff
+*.sh
 
 /config.h*
 /config.nice
@@ -32,3 +36,4 @@
 /Makefile*
 /acinclude.m4
 /aclocal.m4
+/composer.*
