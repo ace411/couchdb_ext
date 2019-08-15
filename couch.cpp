@@ -393,10 +393,9 @@ PHP_METHOD(Request, _delete)
             case COUCH_DEL_DOC:
                 if (!zend_hash_exists(opts, idkey) || !zend_hash_exists(opts, revkey))
                 {
-                    zend_string_release(dbkey);
                     zend_string_release(idkey);
                     zend_string_release(revkey);
-                    FREE_HASHTABLE(opts);
+                    zend_string_release(dbkey);
                     zend_throw_exception(request_exception_ce, "'_id' or '_rev' key is missing", 0 TSRMLS_CC);
                     RETURN_NULL();
                 }
