@@ -1,14 +1,14 @@
 --TEST--
-Extension throws CouchDbException whenever a parameter is empty
+createDb throws CouchDbException when parameter is empty
 --FILE--
 <?php
 require_once 'config.php';
 
 try {
-    echo $couch->insertDocs('testdb', []);
+    echo $couch->createDb('');
 } catch (CouchDbException $exp) {
     echo $exp->getMessage();
 }
 ?>
 --EXPECT--
-Parameters cannot be empty
+Parameter cannot be empty

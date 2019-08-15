@@ -336,5 +336,4 @@ bool Request::updateSingle(const std::string &database,
     auto result = putRequest<const std::string, long>(reqUri, credentials, data, timeout);
 
     return checkStrExists<const std::string>("\"ok\"", result);
-    
 }

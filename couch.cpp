@@ -1,6 +1,10 @@
 #include "php_couchdb_ext.h"
 #include "request.h"
 
+#ifdef HAVE_SPL
+#include "ext/spl/spl_exceptions.h"
+#endif
+
 #define COUCH_DEL_DB 1
 #define COUCH_DEL_DOC 2
 #define COUCH_DEL_DDOC 3
@@ -23,6 +27,7 @@ static inline request_object *php_request_obj_from_obj(zend_object *obj)
 #define Z_TSTOBJ_P(zv) php_request_obj_from_obj(Z_OBJ_P((zv)))
 
 zend_class_entry *request_ce;
+zend_class_entry *request_exception_ce;
 
 PHP_METHOD(Request, __construct)
 {
@@ -109,11 +114,19 @@ PHP_METHOD(Request, allDocs)
         Z_PARAM_ARRAY(queryParams)
     ZEND_PARSE_PARAMETERS_END();
 
-    if (zend_hash_num_elements(HASH_OF(queryParams)) == 0)
-        RETURN_STRING(errStr.c_str());
+    if (zend_hash_num_elements(HASH_OF(queryParams)) == 0 || ZSTR_LEN(database) == 0)
+    {
+        zend_string_release(database);
+        zend_throw_exception(request_exception_ce, "Parameters cannot be empty", 0 TSRMLS_CC);
+        RETURN_NULL();
+    }
 
     if (php_url_encode_hash_ex(HASH_OF(queryParams), &queryBuild, NULL, 0, NULL, 0, NULL, 0, (Z_TYPE_P(queryParams) == IS_OBJECT ? queryParams : NULL), argSep, 1) == FAILURE)
-        RETURN_STRING(errStr.c_str());
+    {
+        zend_string_release(database);
+        zend_throw_exception(request_exception_ce, "Cannot encode query", 0 TSRMLS_CC);
+        RETURN_NULL();
+    }
 
     smart_str_0(&queryBuild);
 
@@ -131,7 +144,6 @@ PHP_METHOD(Request, insertDocs)
 {
     zend_string *database;
     zval *docData;
-    bool errRetval(false);
     smart_str jsonData = {0};
 
     zval *id = getThis();
@@ -142,8 +154,12 @@ PHP_METHOD(Request, insertDocs)
         Z_PARAM_ARRAY(docData)
     ZEND_PARSE_PARAMETERS_END();
 
-    if (zend_hash_num_elements(HASH_OF(docData)) == 0)
-        RETURN_BOOL(errRetval);
+    if (zend_hash_num_elements(HASH_OF(docData)) == 0 || ZSTR_LEN(database) == 0)
+    {
+        zend_string_release(database);
+        zend_throw_exception(request_exception_ce, "Parameters cannot be empty", 0 TSRMLS_CC);
+        RETURN_NULL();
+    }
 
     php_json_encode(&jsonData, docData, 0);
     smart_str_0(&jsonData);
@@ -163,7 +179,7 @@ PHP_METHOD(Request, search)
     zend_string *database;
     zval *query;
     smart_str jsonData = {0};
-
+    zend_string *selectorKey;
     zval *id = getThis();
     request_object *intern;
 
@@ -171,6 +187,24 @@ PHP_METHOD(Request, search)
         Z_PARAM_STR(database)
         Z_PARAM_ARRAY(query)
     ZEND_PARSE_PARAMETERS_END();
+
+    selectorKey = zend_string_init("selector", (sizeof("selector") - 1), 1);
+
+    if (zend_hash_num_elements(HASH_OF(query)) == 0 || ZSTR_LEN(database) == 0) 
+    {
+        zend_string_release(database);
+        zend_string_release(selectorKey);
+        zend_throw_exception(request_exception_ce, "Parameters cannot be empty", 0 TSRMLS_CC);
+        RETURN_NULL();
+    }
+
+    if (!zend_hash_exists(HASH_OF(query), selectorKey))
+    {
+        zend_string_release(database);
+        zend_string_release(selectorKey);
+        zend_throw_exception(request_exception_ce, "'selector' key is missing", 0 TSRMLS_CC);
+        RETURN_NULL();
+    }
 
     php_json_encode(&jsonData, query, 0);
     smart_str_0(&jsonData);
@@ -181,6 +215,7 @@ PHP_METHOD(Request, search)
         std::string retval = intern->request->search(ZSTR_VAL(database), ZSTR_VAL(jsonData.s));
         smart_str_free(&jsonData);
         RETURN_STRING(retval.c_str());
+        zend_string_release(selectorKey);
     }
 }
 
@@ -200,6 +235,16 @@ PHP_METHOD(Request, createDdoc)
         Z_PARAM_ARRAY(docData)
     ZEND_PARSE_PARAMETERS_END();
 
+    if (zend_hash_num_elements(HASH_OF(docData)) == 0 ||
+        ZSTR_LEN(database) == 0 ||
+        ZSTR_LEN(ddoc) == 0)
+    {
+        zend_string_release(ddoc);
+        zend_string_release(database);
+        zend_throw_exception(request_exception_ce, "Parameters cannot be empty", 0 TSRMLS_CC);
+        RETURN_NULL();
+    }
+
     php_json_encode(&jsonData, docData, 0);
     smart_str_0(&jsonData);
 
@@ -218,7 +263,6 @@ PHP_METHOD(Request, queryView)
     zend_string *database;
     zend_string *ddoc;
     zend_string *view;
-    std::string errResult("");
     char *argSep = NULL;
     smart_str queryStr = {0};
 
@@ -232,11 +276,26 @@ PHP_METHOD(Request, queryView)
         Z_PARAM_ARRAY(queryData)
     ZEND_PARSE_PARAMETERS_END();
 
-    if (Z_TYPE_P(queryData) != IS_ARRAY || zend_hash_num_elements(HASH_OF(queryData)) == 0)
-        RETURN_STRING(errResult.c_str());
+    if (zend_hash_num_elements(HASH_OF(queryData)) == 0 ||
+        ZSTR_LEN(database) == 0 ||
+        ZSTR_LEN(ddoc) == 0 ||
+        ZSTR_LEN(view) == 0)
+    {
+        zend_string_release(database);
+        zend_string_release(ddoc);
+        zend_string_release(view);
+        zend_throw_exception(request_exception_ce, "Parameters cannot be empty", 0 TSRMLS_CC);
+        RETURN_NULL();
+    }
 
     if (php_url_encode_hash_ex(HASH_OF(queryData), &queryStr, NULL, 0, NULL, 0, NULL, 0, (Z_TYPE_P(queryData) == IS_OBJECT ? queryData : NULL), argSep, 1) == FAILURE)
-        RETURN_STRING(errResult.c_str());
+    {
+        zend_string_release(database);
+        zend_string_release(ddoc);
+        zend_string_release(view);
+        zend_throw_exception(request_exception_ce, "Cannot encode parameters", 0 TSRMLS_CC);
+        RETURN_NULL();
+    }
 
     smart_str_0(&queryStr);
 
@@ -259,6 +318,13 @@ PHP_METHOD(Request, createDb)
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_STR(database)
     ZEND_PARSE_PARAMETERS_END();
+
+    if (ZSTR_LEN(database) == 0)
+    {
+        zend_string_release(database);
+        zend_throw_exception(request_exception_ce, "Parameter cannot be empty", 0 TSRMLS_CC);
+        RETURN_NULL();
+    }
 
     intern = Z_TSTOBJ_P(id);
     if (intern != NULL)
@@ -289,20 +355,30 @@ PHP_METHOD(Request, _delete)
     ZEND_PARSE_PARAMETERS_END();
 
     if (zend_hash_num_elements(opts) == 0)
-        RETURN_BOOL(false);
+    {
+        zend_throw_exception(request_exception_ce, "Options list cannot be empty", 0 TSRMLS_CC);
+        RETURN_NULL();
+    }
 
-    dbkey = zend_string_init("database", (sizeof("database") - 1), 1);
-    revkey = zend_string_init("_rev", (sizeof("_rev") - 1), 1);
-    idkey = zend_string_init("_id", (sizeof("_id") - 1), 1);
+    dbkey   = zend_string_init("database", (sizeof("database") - 1), 1);
+    revkey  = zend_string_init("_rev", (sizeof("_rev") - 1), 1);
+    idkey   = zend_string_init("_id", (sizeof("_id") - 1), 1);
 
     if (!zend_hash_exists(opts, dbkey))
-        RETURN_BOOL(false);
+    {
+        zend_string_release(dbkey);
+        zend_string_release(idkey);
+        zend_string_release(revkey);
+        FREE_HASHTABLE(opts);
+        zend_throw_exception(request_exception_ce, "'database' key is missing", 0 TSRMLS_CC);
+        RETURN_NULL();
+    }
 
-    retOpt = zend_hash_find(opts, dbkey);
-    _retOpt = zend_hash_find(opts, revkey); 
-    __retOpt = zend_hash_find(opts, idkey);
+    retOpt      = zend_hash_find(opts, dbkey);
+    _retOpt     = zend_hash_find(opts, revkey); 
+    __retOpt    = zend_hash_find(opts, idkey);
 
-    strOpt += Z_STRVAL_P(retOpt);
+    strOpt      += Z_STRVAL_P(retOpt);
     zend_string_release(dbkey);
 
     intern = Z_TSTOBJ_P(id);
@@ -316,7 +392,14 @@ PHP_METHOD(Request, _delete)
 
             case COUCH_DEL_DOC:
                 if (!zend_hash_exists(opts, idkey) || !zend_hash_exists(opts, revkey))
-                    RETURN_BOOL(false);
+                {
+                    zend_string_release(dbkey);
+                    zend_string_release(idkey);
+                    zend_string_release(revkey);
+                    FREE_HASHTABLE(opts);
+                    zend_throw_exception(request_exception_ce, "'_id' or '_rev' key is missing", 0 TSRMLS_CC);
+                    RETURN_NULL();
+                }
 
                 zend_string_release(idkey);
                 zend_string_release(revkey);
@@ -332,6 +415,9 @@ PHP_METHOD(Request, _delete)
 
         zend_hash_destroy(opts);
         FREE_HASHTABLE(opts);
+        zend_string_release(dbkey);
+        zend_string_release(idkey);
+        zend_string_release(revkey);
     }
 }
 
@@ -355,13 +441,18 @@ PHP_METHOD(Request, update)
         Z_PARAM_ARRAY(update)
     ZEND_PARSE_PARAMETERS_END();
 
-    if (zend_hash_num_elements(HASH_OF(update)) == 0)
-        RETURN_BOOL(false);
+    if (zend_hash_num_elements(HASH_OF(update)) == 0 ||
+        ZSTR_LEN(database) == 0)
+    {
+        zend_string_release(database);
+        zend_throw_exception(request_exception_ce, "Parameters cannot be empty", 0 TSRMLS_CC);
+        RETURN_NULL();
+    }
 
-    idkey = zend_string_init("_id", sizeof("_id") - 1, 1);
-    revkey = zend_string_init("_rev", sizeof("_rev") - 1, 1);
+    idkey   = zend_string_init("_id", sizeof("_id") - 1, 1);
+    revkey  = zend_string_init("_rev", sizeof("_rev") - 1, 1);
 
-    intern = Z_TSTOBJ_P(id);
+    intern  = Z_TSTOBJ_P(id);
 
     if (intern != NULL)
     {
@@ -376,15 +467,31 @@ PHP_METHOD(Request, update)
 
                 dockey = zend_string_init("doc", sizeof("doc") - 1, 1);
 
-                if (!zend_hash_exists(HASH_OF(update), idkey) || !zend_hash_exists(HASH_OF(update), revkey) || !zend_hash_exists(HASH_OF(update), dockey))
-                    RETURN_BOOL(false);
+                if (!zend_hash_exists(HASH_OF(update), idkey) || 
+                    !zend_hash_exists(HASH_OF(update), revkey) || 
+                    !zend_hash_exists(HASH_OF(update), dockey))
+                {
+                    zend_string_release(dockey);
+                    zend_string_release(database);
+                    zend_string_release(idkey);
+                    zend_string_release(revkey);
+                    zend_throw_exception(request_exception_ce, "'_id', '_rev', or 'doc' key is missing", 0 TSRMLS_CC);
+                    RETURN_NULL();
+                }
 
                 _opt = zend_hash_find(HASH_OF(update), idkey);
                 __opt = zend_hash_find(HASH_OF(update), revkey);
                 ___opt = zend_hash_find(HASH_OF(update), dockey);
                 
                 if (Z_TYPE_P(___opt) != IS_ARRAY)
-                    RETURN_BOOL(false);
+                {
+                    zend_string_release(dockey);
+                    zend_string_release(database);
+                    zend_string_release(idkey);
+                    zend_string_release(revkey);
+                    zend_throw_exception(request_exception_ce, "Document should be an array", 0 TSRMLS_CC);
+                    RETURN_NULL();
+                }
 
                 php_json_encode(&docData, ___opt, 0);
                 smart_str_0(&docData);
@@ -532,7 +639,9 @@ static void request_object_free(zend_object *object)
 PHP_MINIT_FUNCTION(request)
 {
     zend_class_entry ce;
+    zend_class_entry exception_ce;
     INIT_CLASS_ENTRY(ce, "CouchDb", request_methods);
+    INIT_CLASS_ENTRY(exception_ce, "CouchDbException", NULL);
     request_ce = zend_register_internal_class(&ce TSRMLS_CC);
     request_ce->create_object = request_object_new;
 
@@ -544,6 +653,16 @@ PHP_MINIT_FUNCTION(request)
     request_object_handlers.dtor_obj = request_object_destroy;
 
     request_object_handlers.offset = XtOffsetOf(request_object, std);
+
+#ifdef HAVE_SPL
+    request_exception_ce = zend_register_internal_class_ex(
+        &exception_ce, spl_ce_RuntimeException
+    );    
+#else
+    request_exception_ce = zend_register_internal_class_ex(
+        &exception_ce, zend_exception_get_default(TSRMLS_C)
+    );
+#endif
 
     REGISTER_LONG_CONSTANT("COUCH_DEL_DB", COUCH_DEL_DB, CONST_CS|CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("COUCH_DEL_DOC", COUCH_DEL_DOC, CONST_CS|CONST_PERSISTENT);
