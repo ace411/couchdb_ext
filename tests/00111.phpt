@@ -1,10 +1,14 @@
 --TEST--
-_delete method returns false when empty parameter list is supplied
+_delete throws CouchDbException when empty parameter list is supplied
 --FILE--
 <?php
 require_once 'config.php';
 
-var_dump($couch->_delete(COUCH_DEL_DB, []));
+try {
+    echo $couch->_delete(COUCH_DEL_DB, []);
+} catch (CouchDbException $exp) {
+    echo $exp->getMessage();
+}
 ?>
 --EXPECT--
-bool(false)
+Options list cannot be empty

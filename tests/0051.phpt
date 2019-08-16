@@ -1,11 +1,11 @@
 --TEST--
-search throws CouchDbException whenever search array is empty
+allDocs method throws CouchDbException if parameter(s) is|are empty
 --FILE--
 <?php
 require_once 'config.php';
 
 try {
-    $res = json_decode($couch->search('testdb', []), true);
+    echo $couch->allDocs('testdb', []);
 } catch (CouchDbException $exp) {
     echo $exp->getMessage();
 }

@@ -10,7 +10,7 @@ A simple PHP extension for CouchDB.
 
 - [libcurl](https://https://curl.haxx.se/libcurl/)
 
-- PHP 7.3 or greater (Preferably a Non Thread-Safe version)
+- PHP 7.3 or greater
 
 ## Installation
 
@@ -18,13 +18,13 @@ Because couchdb_ext is an extension built on top of libcurl, installation of sai
 
 Installing libcurl can be done by typing the following in a console of your choosing:
 
-```
+```shell
 sudo apt-get install libcurl4-openssl-dev
 ```
 
 Upon successful installation of libcurl, type the following - also in a console - to install ```couchdb_ext```:
 
-```
+```shell
 phpize
 ./configure --enable-couchdb_ext CFLAGS="-lcurl -lpthread"
 make && sudo make install
@@ -32,7 +32,7 @@ make && sudo make install
 
 If you intend to run the tests in the tests directory, run the following command:
 
-```
+```shell
 make test
 ```
 

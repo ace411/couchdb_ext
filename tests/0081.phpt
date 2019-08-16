@@ -1,11 +1,11 @@
 --TEST--
-search throws CouchDbException whenever search array is empty
+createDdoc throws CouchDbException whenever parameter is missing
 --FILE--
 <?php
 require_once 'config.php';
 
 try {
-    $res = json_decode($couch->search('testdb', []), true);
+    echo $couch->createDdoc('', 'githubDoc', []);
 } catch (CouchDbException $exp) {
     echo $exp->getMessage();
 }
