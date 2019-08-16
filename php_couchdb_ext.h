@@ -2,7 +2,7 @@
 #define PHP_COUCHDB_EXT_H
 
 #define PHP_COUCHDB_EXT_EXTNAME "couchdb_ext"
-#define PHP_COUCHDB_EXT_EXTVER  "1.0"
+#define PHP_COUCHDB_EXT_EXTVER  "0.1.0-beta"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

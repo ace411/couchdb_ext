@@ -665,8 +665,14 @@ PHP_MINIT_FUNCTION(request)
     return SUCCESS;
 }
 
+static const zend_module_dep request_deps[] = {
+    ZEND_MOD_REQUIRED("json")
+    ZEND_MOD_END
+};
+
 zend_module_entry couchdb_ext_module_entry = {
-    STANDARD_MODULE_HEADER,
+    STANDARD_MODULE_HEADER_EX, NULL,
+    request_deps,
     PHP_COUCHDB_EXT_EXTNAME,
     NULL,
     PHP_MINIT(request),
