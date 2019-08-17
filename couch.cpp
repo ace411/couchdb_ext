@@ -337,7 +337,7 @@ PHP_METHOD(Request, createDb)
 PHP_METHOD(Request, _delete)
 {
     long opt;
-    HashTable *opts;
+    zval *opts;
     zval *retOpt;
     zval *_retOpt;
     zval *__retOpt;
@@ -351,10 +351,10 @@ PHP_METHOD(Request, _delete)
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
         Z_PARAM_LONG(opt)
-        Z_PARAM_ARRAY_HT(opts)
+        Z_PARAM_ARRAY(opts)
     ZEND_PARSE_PARAMETERS_END();
 
-    if (zend_hash_num_elements(opts) == 0)
+    if (zend_hash_num_elements(HASH_OF(opts)) == 0)
     {
         zend_throw_exception(request_exception_ce, "Options list cannot be empty", 0 TSRMLS_CC);
         RETURN_NULL();
@@ -364,19 +364,18 @@ PHP_METHOD(Request, _delete)
     revkey  = zend_string_init("_rev", (sizeof("_rev") - 1), 1);
     idkey   = zend_string_init("_id", (sizeof("_id") - 1), 1);
 
-    if (!zend_hash_exists(opts, dbkey))
+    if (!zend_hash_exists(HASH_OF(opts), dbkey))
     {
         zend_string_release(dbkey);
         zend_string_release(idkey);
         zend_string_release(revkey);
-        FREE_HASHTABLE(opts);
         zend_throw_exception(request_exception_ce, "'database' key is missing", 0 TSRMLS_CC);
         RETURN_NULL();
     }
 
-    retOpt      = zend_hash_find(opts, dbkey);
-    _retOpt     = zend_hash_find(opts, revkey); 
-    __retOpt    = zend_hash_find(opts, idkey);
+    retOpt      = zend_hash_find(HASH_OF(opts), dbkey);
+    _retOpt     = zend_hash_find(HASH_OF(opts), revkey); 
+    __retOpt    = zend_hash_find(HASH_OF(opts), idkey);
 
     strOpt      += Z_STRVAL_P(retOpt);
     zend_string_release(dbkey);
@@ -391,7 +390,8 @@ PHP_METHOD(Request, _delete)
                 break;
 
             case COUCH_DEL_DOC:
-                if (!zend_hash_exists(opts, idkey) || !zend_hash_exists(opts, revkey))
+                if (!zend_hash_exists(HASH_OF(opts), idkey) || 
+                    !zend_hash_exists(HASH_OF(opts), revkey))
                 {
                     zend_throw_exception(request_exception_ce, "'_id' or '_rev' key is missing", 0 TSRMLS_CC);
                     RETURN_NULL();
@@ -405,12 +405,12 @@ PHP_METHOD(Request, _delete)
                 break;
 
             default:
-                RETURN_BOOL(false);
+                zend_string_release(idkey);
+                zend_string_release(revkey);
+                zend_throw_exception(request_exception_ce, "Invalid option", 0 TSRMLS_CC);
+                RETURN_NULL();
                 break;
         }
-
-        zend_hash_destroy(opts);
-        FREE_HASHTABLE(opts);
     }
 }
 
