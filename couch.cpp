@@ -14,7 +14,8 @@
 
 zend_object_handlers request_object_handlers;
 
-typedef struct _request_object {
+typedef struct _request_object
+{
     Request *request;
     zend_object std;
 } request_object;
@@ -31,19 +32,19 @@ zend_class_entry *request_exception_ce;
 
 PHP_METHOD(Request, __construct)
 {
-    zend_string* host;
-    zend_string* user;
-    zend_string* pwd;
+    zend_string *host;
+    zend_string *user;
+    zend_string *pwd;
     long timeout = 60, port = 5984;
     zval *id = getThis();
     request_object *intern;
 
     ZEND_PARSE_PARAMETERS_START(3, 5)
-        Z_PARAM_STR(host)
-        Z_PARAM_STR(user)
-        Z_PARAM_STR(pwd)
-        Z_PARAM_LONG(port)
-        Z_PARAM_LONG(timeout)
+    Z_PARAM_STR(host)
+    Z_PARAM_STR(user)
+    Z_PARAM_STR(pwd)
+    Z_PARAM_LONG(port)
+    Z_PARAM_LONG(timeout)
     ZEND_PARSE_PARAMETERS_END();
 
     intern = Z_TSTOBJ_P(id);
@@ -58,7 +59,7 @@ PHP_METHOD(Request, uuids)
     request_object *intern;
 
     ZEND_PARSE_PARAMETERS_START(0, 1)
-        Z_PARAM_LONG(idCount)
+    Z_PARAM_LONG(idCount)
     ZEND_PARSE_PARAMETERS_END();
 
     intern = Z_TSTOBJ_P(id);
@@ -110,8 +111,8 @@ PHP_METHOD(Request, allDocs)
     request_object *intern;
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
-        Z_PARAM_STR(database)
-        Z_PARAM_ARRAY(queryParams)
+    Z_PARAM_STR(database)
+    Z_PARAM_ARRAY(queryParams)
     ZEND_PARSE_PARAMETERS_END();
 
     if (zend_hash_num_elements(HASH_OF(queryParams)) == 0 || ZSTR_LEN(database) == 0)
@@ -150,8 +151,8 @@ PHP_METHOD(Request, insertDocs)
     request_object *intern;
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
-        Z_PARAM_STR(database)
-        Z_PARAM_ARRAY(docData)
+    Z_PARAM_STR(database)
+    Z_PARAM_ARRAY(docData)
     ZEND_PARSE_PARAMETERS_END();
 
     if (zend_hash_num_elements(HASH_OF(docData)) == 0 || ZSTR_LEN(database) == 0)
@@ -184,13 +185,13 @@ PHP_METHOD(Request, search)
     request_object *intern;
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
-        Z_PARAM_STR(database)
-        Z_PARAM_ARRAY(query)
+    Z_PARAM_STR(database)
+    Z_PARAM_ARRAY(query)
     ZEND_PARSE_PARAMETERS_END();
 
     selectorKey = zend_string_init("selector", (sizeof("selector") - 1), 1);
 
-    if (zend_hash_num_elements(HASH_OF(query)) == 0 || ZSTR_LEN(database) == 0) 
+    if (zend_hash_num_elements(HASH_OF(query)) == 0 || ZSTR_LEN(database) == 0)
     {
         zend_string_release(database);
         zend_string_release(selectorKey);
@@ -230,9 +231,9 @@ PHP_METHOD(Request, createDdoc)
     request_object *intern;
 
     ZEND_PARSE_PARAMETERS_START(3, 3)
-        Z_PARAM_STR(database)
-        Z_PARAM_STR(ddoc)
-        Z_PARAM_ARRAY(docData)
+    Z_PARAM_STR(database)
+    Z_PARAM_STR(ddoc)
+    Z_PARAM_ARRAY(docData)
     ZEND_PARSE_PARAMETERS_END();
 
     if (zend_hash_num_elements(HASH_OF(docData)) == 0 ||
@@ -270,10 +271,10 @@ PHP_METHOD(Request, queryView)
     request_object *intern;
 
     ZEND_PARSE_PARAMETERS_START(4, 4)
-        Z_PARAM_STR(database)
-        Z_PARAM_STR(ddoc)
-        Z_PARAM_STR(view)
-        Z_PARAM_ARRAY(queryData)
+    Z_PARAM_STR(database)
+    Z_PARAM_STR(ddoc)
+    Z_PARAM_STR(view)
+    Z_PARAM_ARRAY(queryData)
     ZEND_PARSE_PARAMETERS_END();
 
     if (zend_hash_num_elements(HASH_OF(queryData)) == 0 ||
@@ -316,7 +317,7 @@ PHP_METHOD(Request, createDb)
     request_object *intern;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
-        Z_PARAM_STR(database)
+    Z_PARAM_STR(database)
     ZEND_PARSE_PARAMETERS_END();
 
     if (ZSTR_LEN(database) == 0)
@@ -337,7 +338,7 @@ PHP_METHOD(Request, createDb)
 PHP_METHOD(Request, _delete)
 {
     long opt;
-    HashTable *opts;
+    zval *opts;
     zval *retOpt;
     zval *_retOpt;
     zval *__retOpt;
@@ -350,35 +351,34 @@ PHP_METHOD(Request, _delete)
     request_object *intern;
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
-        Z_PARAM_LONG(opt)
-        Z_PARAM_ARRAY_HT(opts)
+    Z_PARAM_LONG(opt)
+    Z_PARAM_ARRAY(opts)
     ZEND_PARSE_PARAMETERS_END();
 
-    if (zend_hash_num_elements(opts) == 0)
+    if (zend_hash_num_elements(HASH_OF(opts)) == 0)
     {
         zend_throw_exception(request_exception_ce, "Options list cannot be empty", 0 TSRMLS_CC);
         RETURN_NULL();
     }
 
-    dbkey   = zend_string_init("database", (sizeof("database") - 1), 1);
-    revkey  = zend_string_init("_rev", (sizeof("_rev") - 1), 1);
-    idkey   = zend_string_init("_id", (sizeof("_id") - 1), 1);
+    dbkey = zend_string_init("database", (sizeof("database") - 1), 1);
+    revkey = zend_string_init("_rev", (sizeof("_rev") - 1), 1);
+    idkey = zend_string_init("_id", (sizeof("_id") - 1), 1);
 
-    if (!zend_hash_exists(opts, dbkey))
+    if (!zend_hash_exists(HASH_OF(opts), dbkey))
     {
         zend_string_release(dbkey);
         zend_string_release(idkey);
         zend_string_release(revkey);
-        FREE_HASHTABLE(opts);
         zend_throw_exception(request_exception_ce, "'database' key is missing", 0 TSRMLS_CC);
         RETURN_NULL();
     }
 
-    retOpt      = zend_hash_find(opts, dbkey);
-    _retOpt     = zend_hash_find(opts, revkey); 
-    __retOpt    = zend_hash_find(opts, idkey);
+    retOpt = zend_hash_find(HASH_OF(opts), dbkey);
+    _retOpt = zend_hash_find(HASH_OF(opts), revkey);
+    __retOpt = zend_hash_find(HASH_OF(opts), idkey);
 
-    strOpt      += Z_STRVAL_P(retOpt);
+    strOpt += Z_STRVAL_P(retOpt);
     zend_string_release(dbkey);
 
     intern = Z_TSTOBJ_P(id);
@@ -386,31 +386,32 @@ PHP_METHOD(Request, _delete)
     {
         switch (opt)
         {
-            case COUCH_DEL_DB:
-                RETURN_BOOL(intern->request->deleteOpt(strOpt));
-                break;
+        case COUCH_DEL_DB:
+            RETURN_BOOL(intern->request->deleteOpt(strOpt));
+            break;
 
-            case COUCH_DEL_DOC:
-                if (!zend_hash_exists(opts, idkey) || !zend_hash_exists(opts, revkey))
-                {
-                    zend_throw_exception(request_exception_ce, "'_id' or '_rev' key is missing", 0 TSRMLS_CC);
-                    RETURN_NULL();
-                }
+        case COUCH_DEL_DOC:
+            if (!zend_hash_exists(HASH_OF(opts), idkey) ||
+                !zend_hash_exists(HASH_OF(opts), revkey))
+            {
+                zend_throw_exception(request_exception_ce, "'_id' or '_rev' key is missing", 0 TSRMLS_CC);
+                RETURN_NULL();
+            }
 
-                zend_string_release(idkey);
-                zend_string_release(revkey);
+            zend_string_release(idkey);
+            zend_string_release(revkey);
 
-                strOpt += std::string("/") + Z_STRVAL_P(__retOpt) + "?rev=" + Z_STRVAL_P(_retOpt);
-                RETURN_BOOL(intern->request->deleteOpt(strOpt));
-                break;
+            strOpt += std::string("/") + Z_STRVAL_P(__retOpt) + "?rev=" + Z_STRVAL_P(_retOpt);
+            RETURN_BOOL(intern->request->deleteOpt(strOpt));
+            break;
 
-            default:
-                RETURN_BOOL(false);
-                break;
+        default:
+            zend_string_release(idkey);
+            zend_string_release(revkey);
+            zend_throw_exception(request_exception_ce, "Invalid option", 0 TSRMLS_CC);
+            RETURN_NULL();
+            break;
         }
-
-        zend_hash_destroy(opts);
-        FREE_HASHTABLE(opts);
     }
 }
 
@@ -429,9 +430,9 @@ PHP_METHOD(Request, update)
     request_object *intern;
 
     ZEND_PARSE_PARAMETERS_START(3, 3)
-        Z_PARAM_STR(database)
-        Z_PARAM_LONG(opt)
-        Z_PARAM_ARRAY(update)
+    Z_PARAM_STR(database)
+    Z_PARAM_LONG(opt)
+    Z_PARAM_ARRAY(update)
     ZEND_PARSE_PARAMETERS_END();
 
     if (zend_hash_num_elements(HASH_OF(update)) == 0 ||
@@ -442,84 +443,85 @@ PHP_METHOD(Request, update)
         RETURN_NULL();
     }
 
-    idkey   = zend_string_init("_id", sizeof("_id") - 1, 1);
-    revkey  = zend_string_init("_rev", sizeof("_rev") - 1, 1);
+    idkey = zend_string_init("_id", sizeof("_id") - 1, 1);
+    revkey = zend_string_init("_rev", sizeof("_rev") - 1, 1);
 
-    intern  = Z_TSTOBJ_P(id);
+    intern = Z_TSTOBJ_P(id);
 
     if (intern != NULL)
     {
         switch (opt)
         {
-            case COUCH_UPDATE_SINGLE:
-                zend_string *dockey;
+        case COUCH_UPDATE_SINGLE:
+            zend_string *dockey;
 
-                zval *_opt;
-                zval *__opt;
-                zval *___opt;
+            zval *_opt;
+            zval *__opt;
+            zval *___opt;
 
-                dockey = zend_string_init("doc", sizeof("doc") - 1, 1);
+            dockey = zend_string_init("doc", sizeof("doc") - 1, 1);
 
-                if (!zend_hash_exists(HASH_OF(update), idkey) || 
-                    !zend_hash_exists(HASH_OF(update), revkey) || 
-                    !zend_hash_exists(HASH_OF(update), dockey))
-                {
-                    zend_string_release(dockey);
-                    zend_string_release(database);
-                    zend_string_release(idkey);
-                    zend_string_release(revkey);
-                    zend_throw_exception(request_exception_ce, "'_id', '_rev', or 'doc' key is missing", 0 TSRMLS_CC);
-                    RETURN_NULL();
-                }
+            if (!zend_hash_exists(HASH_OF(update), idkey) ||
+                !zend_hash_exists(HASH_OF(update), revkey) ||
+                !zend_hash_exists(HASH_OF(update), dockey))
+            {
+                zend_string_release(dockey);
+                zend_string_release(database);
+                zend_string_release(idkey);
+                zend_string_release(revkey);
+                zend_throw_exception(request_exception_ce, "'_id', '_rev', or 'doc' key is missing", 0 TSRMLS_CC);
+                RETURN_NULL();
+            }
 
-                _opt = zend_hash_find(HASH_OF(update), idkey);
-                __opt = zend_hash_find(HASH_OF(update), revkey);
-                ___opt = zend_hash_find(HASH_OF(update), dockey);
-                
-                if (Z_TYPE_P(___opt) != IS_ARRAY)
-                {
-                    zend_string_release(dockey);
-                    zend_string_release(database);
-                    zend_string_release(idkey);
-                    zend_string_release(revkey);
-                    zend_throw_exception(request_exception_ce, "Document should be an array", 0 TSRMLS_CC);
-                    RETURN_NULL();
-                }
+            _opt = zend_hash_find(HASH_OF(update), idkey);
+            __opt = zend_hash_find(HASH_OF(update), revkey);
+            ___opt = zend_hash_find(HASH_OF(update), dockey);
 
-                php_json_encode(&docData, ___opt, 0);
-                smart_str_0(&docData);
+            if (Z_TYPE_P(___opt) != IS_ARRAY)
+            {
+                zend_string_release(dockey);
+                zend_string_release(database);
+                zend_string_release(idkey);
+                zend_string_release(revkey);
+                zend_throw_exception(request_exception_ce, "Document should be an array", 0 TSRMLS_CC);
+                RETURN_NULL();
+            }
 
-                RETURN_BOOL(intern->request->updateSingle(ZSTR_VAL(database), 
-                    Z_STRVAL_P(_opt), 
-                    Z_STRVAL_P(__opt),
-                    ZSTR_VAL(docData.s)));                    
-                break;
+            php_json_encode(&docData, ___opt, 0);
+            smart_str_0(&docData);
 
-            case COUCH_UPDATE_MULTIPLE:                
-                zval *retval;
-                zval *_docs;
+            RETURN_BOOL(intern->request->updateSingle(ZSTR_VAL(database),
+                                                      Z_STRVAL_P(_opt),
+                                                      Z_STRVAL_P(__opt),
+                                                      ZSTR_VAL(docData.s)));
+            break;
 
-                ZEND_HASH_FOREACH_VAL(HASH_OF(update), retval) {
-                    if (Z_TYPE_P(retval) != IS_ARRAY)
-                        RETURN_BOOL(false);
+        case COUCH_UPDATE_MULTIPLE:
+            zval *retval;
+            zval *_docs;
 
-                    if (!zend_hash_exists(Z_ARRVAL_P(retval), idkey) || !zend_hash_exists(Z_ARRVAL_P(retval), revkey))
-                        RETURN_BOOL(false);
-                } ZEND_HASH_FOREACH_END();
+            ZEND_HASH_FOREACH_VAL(HASH_OF(update), retval)
+            {
+                if (Z_TYPE_P(retval) != IS_ARRAY)
+                    RETURN_BOOL(false);
 
-                array_init(_docs);
-                add_assoc_zval(_docs, "docs", update);
+                if (!zend_hash_exists(Z_ARRVAL_P(retval), idkey) || !zend_hash_exists(Z_ARRVAL_P(retval), revkey))
+                    RETURN_BOOL(false);
+            }
+            ZEND_HASH_FOREACH_END();
 
-                php_json_encode(&docData, _docs, 0);
-                smart_str_0(&docData);
+            array_init(_docs);
+            add_assoc_zval(_docs, "docs", update);
 
-                RETURN_BOOL(intern->request->insertDocs(ZSTR_VAL(database), ZSTR_VAL(docData.s)));
-                break;
+            php_json_encode(&docData, _docs, 0);
+            smart_str_0(&docData);
 
+            RETURN_BOOL(intern->request->insertDocs(ZSTR_VAL(database), ZSTR_VAL(docData.s)));
+            break;
 
-            default:
-                RETURN_BOOL(false);
-                break;
+        default:
+            RETURN_BOOL(false);
+            break;
         }
 
         smart_str_free(&docData);
@@ -528,81 +530,80 @@ PHP_METHOD(Request, update)
 }
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_constructor, 0, 0, 5)
-    ZEND_ARG_INFO(0, host)
-    ZEND_ARG_INFO(0, user)
-    ZEND_ARG_INFO(0, pwd)
-    ZEND_ARG_INFO(0, port)
-    ZEND_ARG_INFO(0, timeout)
+ZEND_ARG_INFO(0, host)
+ZEND_ARG_INFO(0, user)
+ZEND_ARG_INFO(0, pwd)
+ZEND_ARG_INFO(0, port)
+ZEND_ARG_INFO(0, timeout)
 ZEND_END_ARG_INFO();
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_uuids, 0, 0, 1)
-    ZEND_ARG_INFO(0, idCount)
+ZEND_ARG_INFO(0, idCount)
 ZEND_END_ARG_INFO();
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_alldocs, 0, 0, 2)
-    ZEND_ARG_INFO(0, database)
-    ZEND_ARG_ARRAY_INFO(0, options, 0)
+ZEND_ARG_INFO(0, database)
+ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO();
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_insertdocs, 0, 0, 2)
-    ZEND_ARG_INFO(0, database)
-    ZEND_ARG_ARRAY_INFO(0, data, 0)
+ZEND_ARG_INFO(0, database)
+ZEND_ARG_ARRAY_INFO(0, data, 0)
 ZEND_END_ARG_INFO();
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_search, 0, 0, 2)
-    ZEND_ARG_INFO(0, database)
-    ZEND_ARG_ARRAY_INFO(0, query, 0)
+ZEND_ARG_INFO(0, database)
+ZEND_ARG_ARRAY_INFO(0, query, 0)
 ZEND_END_ARG_INFO();
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_createddoc, 0, 0, 3)
-    ZEND_ARG_INFO(0, database)
-    ZEND_ARG_INFO(0, ddoc)
-    ZEND_ARG_ARRAY_INFO(0, docdata, 0)
+ZEND_ARG_INFO(0, database)
+ZEND_ARG_INFO(0, ddoc)
+ZEND_ARG_ARRAY_INFO(0, docdata, 0)
 ZEND_END_ARG_INFO();
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_queryview, 0, 0, 4)
-    ZEND_ARG_INFO(0, database)
-    ZEND_ARG_INFO(0, ddoc)
-    ZEND_ARG_INFO(0, view)
-    ZEND_ARG_ARRAY_INFO(0, params, 0)
+ZEND_ARG_INFO(0, database)
+ZEND_ARG_INFO(0, ddoc)
+ZEND_ARG_INFO(0, view)
+ZEND_ARG_ARRAY_INFO(0, params, 0)
 ZEND_END_ARG_INFO();
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_createdb, 0, 0, 1)
-    ZEND_ARG_INFO(0, database)
+ZEND_ARG_INFO(0, database)
 ZEND_END_ARG_INFO();
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_delete, 0, 0, 2)
-    ZEND_ARG_INFO(0, option)
-    ZEND_ARG_ARRAY_INFO(0, params, 0)
+ZEND_ARG_INFO(0, option)
+ZEND_ARG_ARRAY_INFO(0, params, 0)
 ZEND_END_ARG_INFO();
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_update, 0, 0, 3)
-    ZEND_ARG_INFO(0, database)
-    ZEND_ARG_INFO(0, option)
-    ZEND_ARG_ARRAY_INFO(0, update, 0)
+ZEND_ARG_INFO(0, database)
+ZEND_ARG_INFO(0, option)
+ZEND_ARG_ARRAY_INFO(0, update, 0)
 ZEND_END_ARG_INFO();
 
 static const zend_function_entry request_methods[] = {
     PHP_ME(Request, __construct, arginfo_constructor, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
-    PHP_ME(Request, uuids, arginfo_uuids, ZEND_ACC_PUBLIC)
-    PHP_ME(Request, isAvailable, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Request, allDbs, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Request, allDocs, arginfo_alldocs, ZEND_ACC_PUBLIC)
-    PHP_ME(Request, insertDocs, arginfo_insertdocs, ZEND_ACC_PUBLIC)
-    PHP_ME(Request, search, arginfo_search, ZEND_ACC_PUBLIC)
-    PHP_ME(Request, createDdoc, arginfo_createddoc, ZEND_ACC_PUBLIC)
-    PHP_ME(Request, queryView, arginfo_queryview, ZEND_ACC_PUBLIC)
-    PHP_ME(Request, createDb, arginfo_createdb, ZEND_ACC_PUBLIC)
-    PHP_ME(Request, _delete, arginfo_delete, ZEND_ACC_PUBLIC)
-    PHP_ME(Request, update, arginfo_update, ZEND_ACC_PUBLIC)
-    PHP_FE_END
-};
+        PHP_ME(Request, uuids, arginfo_uuids, ZEND_ACC_PUBLIC)
+            PHP_ME(Request, isAvailable, NULL, ZEND_ACC_PUBLIC)
+                PHP_ME(Request, allDbs, NULL, ZEND_ACC_PUBLIC)
+                    PHP_ME(Request, allDocs, arginfo_alldocs, ZEND_ACC_PUBLIC)
+                        PHP_ME(Request, insertDocs, arginfo_insertdocs, ZEND_ACC_PUBLIC)
+                            PHP_ME(Request, search, arginfo_search, ZEND_ACC_PUBLIC)
+                                PHP_ME(Request, createDdoc, arginfo_createddoc, ZEND_ACC_PUBLIC)
+                                    PHP_ME(Request, queryView, arginfo_queryview, ZEND_ACC_PUBLIC)
+                                        PHP_ME(Request, createDb, arginfo_createdb, ZEND_ACC_PUBLIC)
+                                            PHP_ME(Request, _delete, arginfo_delete, ZEND_ACC_PUBLIC)
+                                                PHP_ME(Request, update, arginfo_update, ZEND_ACC_PUBLIC)
+                                                    PHP_FE_END};
 
 zend_object *request_object_new(zend_class_entry *ce TSRMLS_DC)
 {
-    request_object *intern = (request_object*)ecalloc(1,
-        sizeof(request_object) +
-        zend_object_properties_size(ce));
+    request_object *intern = (request_object *)ecalloc(1,
+                                                       sizeof(request_object) +
+                                                           zend_object_properties_size(ce));
 
     zend_object_std_init(&intern->std, ce TSRMLS_CC);
     object_properties_init(&intern->std, ce);
@@ -639,8 +640,8 @@ PHP_MINIT_FUNCTION(request)
     request_ce->create_object = request_object_new;
 
     memcpy(&request_object_handlers,
-        zend_get_std_object_handlers(),
-        sizeof(request_object_handlers));
+           zend_get_std_object_handlers(),
+           sizeof(request_object_handlers));
 
     request_object_handlers.free_obj = request_object_free;
     request_object_handlers.dtor_obj = request_object_destroy;
@@ -649,16 +650,14 @@ PHP_MINIT_FUNCTION(request)
 
 #ifdef HAVE_SPL
     request_exception_ce = zend_register_internal_class_ex(
-        &exception_ce, spl_ce_RuntimeException
-    );    
+        &exception_ce, spl_ce_RuntimeException);
 #else
     request_exception_ce = zend_register_internal_class_ex(
-        &exception_ce, zend_exception_get_default(TSRMLS_C)
-    );
+        &exception_ce, zend_exception_get_default(TSRMLS_C));
 #endif
 
-    REGISTER_LONG_CONSTANT("COUCH_DEL_DB", COUCH_DEL_DB, CONST_CS|CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("COUCH_DEL_DOC", COUCH_DEL_DOC, CONST_CS|CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("COUCH_DEL_DB", COUCH_DEL_DB, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("COUCH_DEL_DOC", COUCH_DEL_DOC, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("COUCH_UPDATE_SINGLE", COUCH_UPDATE_SINGLE, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("COUCH_UPDATE_MULTIPLE", COUCH_UPDATE_MULTIPLE, CONST_CS | CONST_PERSISTENT);
 
@@ -667,8 +666,7 @@ PHP_MINIT_FUNCTION(request)
 
 static const zend_module_dep request_deps[] = {
     ZEND_MOD_REQUIRED("json")
-    ZEND_MOD_END
-};
+        ZEND_MOD_END};
 
 zend_module_entry couchdb_ext_module_entry = {
     STANDARD_MODULE_HEADER_EX, NULL,
@@ -681,11 +679,11 @@ zend_module_entry couchdb_ext_module_entry = {
     NULL,
     NULL,
     PHP_COUCHDB_EXT_EXTVER,
-    STANDARD_MODULE_PROPERTIES
-};
+    STANDARD_MODULE_PROPERTIES};
 
 #ifdef COMPILE_DL_COUCHDB_EXT
-extern "C" {
+extern "C"
+{
     ZEND_GET_MODULE(couchdb_ext)
 }
 #endif
