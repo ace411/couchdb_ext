@@ -1,7 +1,22 @@
+/**
+ * @file helpers.cpp
+ * @author Lochemem Bruno Michael (lochbm@gmail.com)
+ * @brief 
+ * @version 0.1.0
+ */
 #include <string>
 #include <initializer_list>
 typedef std::initializer_list<std::string> StrArgs;
 
+/**
+ * @brief Concatenate strings
+ * 
+ * @tparam S 
+ * @tparam L 
+ * @param glue 
+ * @param words 
+ * @return S 
+ */
 template <typename S, typename L>
 auto concat(S glue, L words) -> S
 {
@@ -16,6 +31,15 @@ auto concat(S glue, L words) -> S
     return retval;
 }
 
+/**
+ * @brief Check if a string exists in another string
+ * 
+ * @tparam S 
+ * @param match 
+ * @param str 
+ * @return true 
+ * @return false 
+ */
 template <typename S>
 auto checkStrExists(S &match, S &str) -> bool
 {
@@ -25,6 +49,13 @@ auto checkStrExists(S &match, S &str) -> bool
     return sType != std::string::npos ? true : false;
 }
 
+/**
+ * @brief 
+ * 
+ * @tparam S 
+ * @param str 
+ * @return S 
+ */
 template <typename S>
 auto remAmpersand(S str) -> S
 {
