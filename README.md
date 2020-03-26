@@ -6,15 +6,13 @@ A simple PHP extension for CouchDB.
 
 ## Requirements
 
-- [ext-json](https://www.php.net/manual/en/book.json.php)
-
 - [libcurl](https://https://curl.haxx.se/libcurl/)
 
-- PHP 7.3 or greater
+- PHP 7.2 or greater
 
 ## Installation
 
-Because couchdb_ext is an extension built on top of libcurl, installation of said utility is a mandatory prerequisite for using this tool.
+Because `couchdb_ext` is an extension built on top of libcurl, installation of said utility is a mandatory prerequisite for using this tool.
 
 Installing libcurl can be done by typing the following in a console of your choosing:
 
@@ -29,6 +27,8 @@ phpize
 ./configure --enable-couchdb_ext CFLAGS="-lcurl -lpthread"
 make && sudo make install
 ```
+
+> Do not forget to enable the extension by adding `extension=couchdb_ext` to your `php.ini` file.
 
 If you intend to run the tests in the tests directory, run the following command:
 
@@ -363,12 +363,7 @@ $couch->deleteDocs('your-database', [
 ### updateDoc
 
 ```
-updateDoc(
-    string $database, 
-    string $docId, 
-    string $docRev, 
-    array $doc
-): bool
+updateDoc(string $database, string $docId, string $docRev, array $doc): bool
 ```
 
 **Argument(s):**
