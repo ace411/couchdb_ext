@@ -38,7 +38,7 @@ make test
 
 ## Rationale
 
-I recently published the [fauxton API client](https://github.com/php-api-clients/fauxton), an asynchronous - non-blocking IO solution which is relatively more performant than the [synchronous version](https://github.com/ace411/fauxton-client) I wrote earlier.
+I published the [fauxton API client](https://github.com/php-api-clients/fauxton), an asynchronous - non-blocking IO solution which is relatively more performant than the [synchronous version](https://github.com/ace411/fauxton-client) I wrote earlier.
 
 Also, there exists an [article](https://medium.com/@agiroLoki/a-potential-php-extension-for-couchdb-9604cda48f27) whose premise is farther justifying this undertaking.
 
@@ -51,7 +51,13 @@ if (!extension_loaded("couchdb_ext")) {
     echo "Extension not loaded.";
 }
 
-$couch = new CouchDb('localhost', 'your-username', 'your-password', 5984, 60);
+$couch = new CouchDb([
+    'user'      => 'your-username',
+    'pass'      => 'your-password',
+    'host'      => 'your-host (localhost or cloudant)',
+    'port'      => 5984,
+    'timeout'   => 60,
+]);
 
 if (!$couch->isAvailable()) {
     echo "Could not find a running instance of CouchDB";
@@ -65,23 +71,30 @@ echo $couch->uuids(5);
 ### __construct
 
 ```
-__construct(string $host, string $user, string $pwd, int $port, int $timeout)
+__construct(array $options)
 ```
 
 **Argument(s):**
 
-- ***host (string)*** - CouchDB host
-- ***user (string)*** - CouchDB username
-- ***pwd (string)*** - CouchDB password
-- ***port (integer)*** - CouchDB port
-- ***timeout (integer)*** - Request timeout
+- ***options (array)*** - Configuration options array
+    - ***host (string)*** - CouchDB host
+    - ***user (string)*** - CouchDB username
+    - ***pass (string)*** - CouchDB password
+    - ***port (integer)*** - CouchDB port (defaults to 5984)
+    - ***timeout (integer)*** - Request timeout (defaults to 60)
 
 Creates an instance of the CouchDb class.
 
 ```php
-const CONFIG = ['localhost', 'your-username', 'your-password', 5984, 60];
+const CONFIG = [
+    'user'      => 'your-username',
+    'pass'      => 'your-password',
+    'host'      => 'your-host (localhost or cloudant)',
+    'port'      => 5984,
+    'timeout'   => 60,
+];
 
-$couchDb = new CouchDb(...CONFIG);
+$couchDb = new CouchDb(CONFIG);
 ```
 
 ### isAvailable
@@ -138,13 +151,16 @@ const DB_NAME = 'your-database';
 
 if ($couch->createDb(DB_NAME)) {
     $couch->insertDocs(DB_NAME, [
-        'docs'  => [
-            [
-                'name'          => 'Bruno',
-                'facebook'      => 'agiroLoki'
-            ],
-            ...
-        ]
+        [
+            '_id'       => 'FishStew',
+            'servings'  => 4,
+            'subtitle'  => 'Delicious with freshly baked bread'
+        ],
+        [
+            '_id'       => 'LambStew',
+            'servings'  => 6,
+            'subtitle'  => 'Serve with a whole meal scone topping'
+        ],
     ]);
 }
 ```
@@ -194,30 +210,30 @@ echo $couch->allDocs('your-database', [
 ### insertDocs
 
 ```
-insertDocs(string $database, array $data): bool
+insertDocs(string $database, array $docs): bool
 ```
 
 **Argument(s):**
 
 - ***database (string)*** - The name of the database
-- ***data (array)*** - The data to insert in the database
+- ***docs (array)*** - The data to insert in the database
 
-> Note: Please include the 'docs' key in the $data array to preempt a false response
-
-Inserts data in a database.
+Inserts data into a CouchDB database.
 
 ```php
 ...
 $couch->insertDocs('your-database', [
-    'docs' => [
-        [
-            'name'      => 'Michael',
-            'github'    => '@ace411',
-            'twitter'   => '@agiroLoki' 
-        ],
-        ...
+    [
+        '_id'       => 'FishStew',
+        'servings'  => 4,
+        'subtitle'  => 'Delicious with freshly baked bread'
+    ],
+    [
+        '_id'       => 'LambStew',
+        'servings'  => 6,
+        'subtitle'  => 'Serve with a whole meal scone topping'
     ]
-]); //outputs true or false
+]);
 ```
 
 ### search
@@ -296,61 +312,111 @@ Queries a view in a specified database.
 ]), true);
 ```
 
-### _delete
+### deleteDoc
 
 ```
-_delete(int option, array $params): bool
+deleteDoc(string $database, string $docId, string $docRev): bool
 ```
 
 **Argument(s):**
 
-- ***option (integer)*** - Deletion option. Available options are ```COUCH_DEL_DB``` and ```COUCH_DEL_DOC```
-- ***params (array)*** - Parameters for option-specific deletion (see table below)
+- ***database (string)*** - CouchDB database
+- ***docId (string)*** - Unique document identifier
+- ***docRev (string)*** - Unique document revision
 
-| Option | Parameters |
-|--------|------------|
-| ```COUCH_DEL_DB``` | database |
-| ```COUCH_DEL_DOC``` | database, _id, _rev |
-
-Deletes one of either a database or document.
+Deletes a specified document from a CouchDB database.
 
 ```php
 ...
-$couch->_delete(COUCH_DEL_DOC, [
-    'database'  => 'a-database',
-    '_id'       => 'doc-identifier',
-    '_rev'      => 'doc-rev'
+$couch->deleteDoc('your-database', 'doc-id', 'doc-rev');
+```
+
+### deleteDocs
+
+```
+deleteDocs(string $database, array $docs): bool
+```
+
+**Argument(s):**
+
+- ***database (string)*** - CouchDB database
+- ***docs (array)*** - A list of documents
+
+> `_id` and `_rev` keys are mandatory for each `docs` array entry
+
+Deletes documents from a CouchDB database.
+
+```php
+...
+$couch->deleteDocs('your-database', [
+    [
+        '_id'   => 'Pilau',
+        '_rev'  => '1-599acfa0c7b36889599bde56276e444c'
+    ],
+    [
+        '_id'   => 'Katogo',
+        '_rev'  => '1-41669894c7d25a634f5de4fef75fb982'
+    ]
 ]);
 ```
 
-### update
+### updateDoc
 
 ```
-update(string $database, int $option, array $data): bool
+updateDoc(
+    string $database, 
+    string $docId, 
+    string $docRev, 
+    array $doc
+): bool
 ```
 
 **Argument(s):**
 
 - ***database (string)*** - The name of the database
-- ***option (integer)*** - Update option. Available options are ```COUCH_UPDATE_SINGLE``` and ```COUCH_UPDATE_MULTIPLE```
-- ***data (array)*** - The data containing the update contents
+- ***docId (string)*** - Unique document identifier
+- ***docRev (string)*** - Unique document revision
+- ***doc (array)*** - The data containing the update contents
 
-| Option | Required keys |
-|--------|------------|
-| ```COUCH_UPDATE_SINGLE``` | _id, _rev, doc |
-| ```COUCH_UPDATE_MULTIPLE``` | none |
-
-Updates the contents of a database.
+Updates a document in a CouchDB database.
 
 ```php
 ...
-$couch->update('your-database', COUCH_UPDATE_SINGLE, [
-    '_id'       => 'doc-identifier',
-    '_rev'      => 'doc-rev',
-    'doc'       => [
-        'firstname'     => 'Michael',
-        'lastname'      => 'Lochemem',
-        'twiter'        => '@agiroLoki'
-    ] 
+$couch->updateDoc('your-database', 'Pilau', '1-599acfa0c7b36889599bde56276e444c', [
+    'servings'  => 4,
+    'subtitle'  => 'A delicious amalgam of rice and spices'
+]);
+```
+
+### updateDocs
+
+```
+updateDocs(string $database, array $docs): bool
+```
+
+**Argument(s):**
+
+- ***database (string)*** - CouchDB database
+- ***docs (array)*** - A list of documents to update
+
+> `_id` and `_rev` keys are mandatory for each `docs` array entry
+
+Updates multiple documents in a CouchDB database.
+
+```php
+...
+$couch->updateDocs('your-database', [
+    [
+        '_id'       => 'fishStew',
+        '_rev'      => '1-41669894c7d25a634f5de4fef75fb982'
+        'servings'  => 2,
+        'subtitle'  => 'Delicious with freshly baked bread'
+    ],
+    [
+        '_id'       => 'LambStew',
+        '_rev'      => '1-599acfa0c7b36889599bde56276e444c',
+        'servings'  => 3,
+        'subtitle'  => 'Serve with a whole meal scone topping'
+    ]
 ]);
 ```
