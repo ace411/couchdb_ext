@@ -117,7 +117,13 @@ PHP_METHOD(Request, isAvailable)
     zval *id = getThis();
     request_object *intern;
 
+#ifdef ZEND_PARSE_PARAMETERS_NONE
     ZEND_PARSE_PARAMETERS_NONE();
+#endif
+    if (zend_parse_parameters_none() == FAILURE)
+    {
+        RETURN_NULL();
+    }
 
     intern = Z_TSTOBJ_P(id);
     if (intern != NULL)
@@ -131,8 +137,13 @@ PHP_METHOD(Request, allDbs)
 {
     zval *id = getThis();
     request_object *intern;
-
+#ifdef ZEND_PARSE_PARAMETERS_NONE
     ZEND_PARSE_PARAMETERS_NONE();
+#endif
+    if (zend_parse_parameters_none() == FAILURE)
+    {
+        RETURN_NULL();
+    }
 
     intern = Z_TSTOBJ_P(id);
     if (intern != NULL)
