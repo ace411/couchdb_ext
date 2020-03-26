@@ -221,7 +221,7 @@ PHP_METHOD(Request, allDocs)
 PHP_METHOD(Request, insertDocs)
 {
     zend_string *database, *docKey;
-    zval *docData, *jsonFinal;
+    zval *docData;
     smart_str jsonData = {0};
 
     zval *id = getThis();
@@ -234,17 +234,29 @@ PHP_METHOD(Request, insertDocs)
 
     docKey = zend_string_init("docs", sizeof("docs") - 1, 1);
 
+    // throw exception if parameters are empty
     if (zend_hash_num_elements(HASH_OF(docData)) == 0 || ZSTR_LEN(database) == 0)
     {
+        zend_string_release(docKey);
         zend_string_release(database);
-        zend_throw_exception(request_exception_ce, "Argument(s) cannot be empty", 0 TSRMLS_CC);
+        zend_throw_exception(request_exception_ce,
+                             "Argument(s) cannot be empty",
+                             0 TSRMLS_CC);
         RETURN_NULL();
     }
 
-    array_init(jsonFinal);
-    add_assoc_zval(jsonFinal, "docs", docData);
+    // throw exception if docs key is missing
+    if (!zend_hash_exists(Z_ARRVAL_P(docData), docKey))
+    {
+        zend_string_release(docKey);
+        zend_string_release(database);
+        zend_throw_exception(request_exception_ce,
+                             "'docs' key is missing",
+                             0 TSRMLS_CC);
+        RETURN_NULL();
+    }
 
-    php_json_encode(&jsonData, jsonFinal, 0);
+    php_json_encode(&jsonData, docData, 0);
     smart_str_0(&jsonData);
 
     intern = Z_TSTOBJ_P(id);
@@ -653,8 +665,8 @@ PHP_METHOD(Request, updateDoc)
 */
 PHP_METHOD(Request, updateDocs)
 {
-    zend_string *database, *idKey, *revKey;
-    zval *doc, *jsonFinal, *docVal;
+    zend_string *database, *docKey;
+    zval *doc, *docVal;
 
     smart_str jsonData = {0};
 
@@ -666,19 +678,26 @@ PHP_METHOD(Request, updateDocs)
     Z_PARAM_ARRAY(doc)
     ZEND_PARSE_PARAMETERS_END();
 
-    array_init(jsonFinal);
-
-    idKey = zend_string_init("_id", sizeof("_id") - 1, 1);
-    revKey = zend_string_init("_rev", sizeof("_rev") - 1, 1);
+    docKey = zend_string_init("docs", sizeof("docs") - 1, 1);
 
     if (zend_hash_num_elements(HASH_OF(doc)) == 0 ||
         ZSTR_LEN(database) == 0)
     {
-        zend_string_release(idKey);
-        zend_string_release(revKey);
+        zend_string_release(docKey);
         zend_string_release(database);
         zend_throw_exception(request_exception_ce,
                              "Argument(s) cannot be empty",
+                             0 TSRMLS_CC);
+        RETURN_NULL();
+    }
+
+    // throw exception if docs key is missing
+    if (!zend_hash_exists(Z_ARRVAL_P(doc), docKey))
+    {
+        zend_string_release(docKey);
+        zend_string_release(database);
+        zend_throw_exception(request_exception_ce,
+                             "'docs' key is missing",
                              0 TSRMLS_CC);
         RETURN_NULL();
     }
@@ -695,30 +714,17 @@ PHP_METHOD(Request, updateDocs)
                                      0 TSRMLS_CC);
                 RETURN_NULL();
             }
-
-            if (!zend_hash_exists(Z_ARRVAL_P(docVal), idKey) ||
-                !zend_hash_exists(Z_ARRVAL_P(docVal), revKey))
-            {
-                zend_throw_exception(request_exception_ce,
-                                     "'id' or 'rev' key is missing",
-                                     0 TSRMLS_CC);
-                RETURN_NULL();
-            }
         }
         ZEND_HASH_FOREACH_END();
 
-        add_assoc_zval(jsonFinal, "docs", doc);
-
-        php_json_encode(&jsonData, jsonFinal, 0);
+        php_json_encode(&jsonData, doc, 0);
         smart_str_0(&jsonData);
 
         RETURN_BOOL(intern->request->insertDocs(ZSTR_VAL(database),
                                                 ZSTR_VAL(jsonData.s)));
-        // RETURN_STRING(ZSTR_VAL(jsonData.s));
         smart_str_free(&jsonData);
         zend_string_release(database);
-        zend_string_release(idKey);
-        zend_string_release(revKey);
+        zend_string_release(docKey);
     }
 }
 /* }}} */

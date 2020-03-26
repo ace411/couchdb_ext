@@ -151,16 +151,18 @@ const DB_NAME = 'your-database';
 
 if ($couch->createDb(DB_NAME)) {
     $couch->insertDocs(DB_NAME, [
-        [
-            '_id'       => 'FishStew',
-            'servings'  => 4,
-            'subtitle'  => 'Delicious with freshly baked bread'
-        ],
-        [
-            '_id'       => 'LambStew',
-            'servings'  => 6,
-            'subtitle'  => 'Serve with a whole meal scone topping'
-        ],
+        'docs' => [
+            [
+                '_id'       => 'FishStew',
+                'servings'  => 4,
+                'subtitle'  => 'Delicious with freshly baked bread'
+            ],
+            [
+                '_id'       => 'LambStew',
+                'servings'  => 6,
+                'subtitle'  => 'Serve with a whole meal scone topping'
+            ]
+        ]
     ]);
 }
 ```
@@ -223,15 +225,17 @@ Inserts data into a CouchDB database.
 ```php
 ...
 $couch->insertDocs('your-database', [
-    [
-        '_id'       => 'FishStew',
-        'servings'  => 4,
-        'subtitle'  => 'Delicious with freshly baked bread'
-    ],
-    [
-        '_id'       => 'LambStew',
-        'servings'  => 6,
-        'subtitle'  => 'Serve with a whole meal scone topping'
+    'docs' => [
+        [
+            '_id'       => 'FishStew',
+            'servings'  => 4,
+            'subtitle'  => 'Delicious with freshly baked bread'
+        ],
+        [
+            '_id'       => 'LambStew',
+            'servings'  => 6,
+            'subtitle'  => 'Serve with a whole meal scone topping'
+        ]
     ]
 ]);
 ```
@@ -401,17 +405,19 @@ Updates multiple documents in a CouchDB database.
 ```php
 ...
 $couch->updateDocs('your-database', [
-    [
-        '_id'       => 'fishStew',
-        '_rev'      => '1-41669894c7d25a634f5de4fef75fb982'
-        'servings'  => 2,
-        'subtitle'  => 'Delicious with freshly baked bread'
-    ],
-    [
-        '_id'       => 'LambStew',
-        '_rev'      => '1-599acfa0c7b36889599bde56276e444c',
-        'servings'  => 3,
-        'subtitle'  => 'Serve with a whole meal scone topping'
+    'docs' => [
+        [
+            '_id'       => 'fishStew',
+            '_rev'      => '1-41669894c7d25a634f5de4fef75fb982'
+            'servings'  => 2,
+            'subtitle'  => 'Delicious with freshly baked bread'
+        ],
+        [
+            '_id'       => 'LambStew',
+            '_rev'      => '1-599acfa0c7b36889599bde56276e444c',
+            'servings'  => 3,
+            'subtitle'  => 'Serve with a whole meal scone topping'
+        ]
     ]
 ]);
 ```
