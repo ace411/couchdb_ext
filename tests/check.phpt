@@ -1,5 +1,5 @@
 --TEST--
-Check if couchdb_ext works
+couchdb_ext works
 --SKIPIF--
 <?php 
 if (!extension_loaded('couchdb_ext')) 
@@ -7,8 +7,9 @@ if (!extension_loaded('couchdb_ext'))
 ?>
 --FILE--
 <?php
-$couch = new CouchDb('localhost', '', '', 5984, 60);
-echo gettype($couch);
+require_once 'config.php';
+
+echo $couch instanceof CouchDb ? 'true' : 'false';
 ?>
 --EXPECT--
-object
+true
