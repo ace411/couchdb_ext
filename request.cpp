@@ -1,5 +1,13 @@
+/**
+ * @file request.cpp
+ * @author Lochemem Bruno Michael (lochbm@gmail.com)
+ * @brief 
+ * @version 0.1
+ */
 #include "request.h"
 #include "http.cpp"
+
+using namespace std;
 
 Request::Request(const std::string &host,
                  const std::string &user,
@@ -17,7 +25,8 @@ Request::Request(const std::string &host,
 
 std::string Request::uuids(long count) const
 {
-    std::string reqUri = concat<std::string, StrArgs>("?", {(baseUri + "/_uuids"), ("count=" + std::to_string(count))});
+    std::string reqUri = concat<std::string, StrArgs>("?", {(baseUri + "/_uuids"),
+                                                            ("count=" + std::to_string(count))});
 
     return getRequest<const std::string, long>(reqUri, credentials, timeout);
 }
@@ -40,7 +49,8 @@ std::string Request::allDbs() const
 std::string Request::allDocs(const std::string &database, const std::string &params) const
 {
     auto reqUri = concat<std::string, StrArgs>("", {(baseUri + "/" + database + "/"),
-                                                    concat<std::string, StrArgs>("?", {"_all_docs", remAmpersand<std::string>(params)})});
+                                                    concat<std::string, StrArgs>("?", {"_all_docs",
+                                                                                       remAmpersand<std::string>(params)})});
 
     return getRequest<const std::string, long>(reqUri, credentials, timeout);
 }
@@ -80,7 +90,8 @@ std::string Request::queryView(const std::string &database,
                                                      "_design",
                                                      ddoc,
                                                      "_view",
-                                                     concat<std::string, StrArgs>("?", {view, remAmpersand<std::string>(params)})});
+                                                     concat<std::string, StrArgs>("?", {view,
+                                                                                        remAmpersand<std::string>(params)})});
 
     return getRequest<const std::string, long>(reqUri, credentials, timeout);
 }

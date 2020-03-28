@@ -1,5 +1,19 @@
 <?php
 
-const CONFIG = ['localhost', '', '', 5984, 60];
+declare(strict_types=1);
 
-$couch = new CouchDb(...CONFIG);
+/**
+ * @var array CONFIG
+ */
+const CONFIG    = [
+  'user' => '',
+  'pass' => '',
+  'host' => 'localhost'
+];
+
+/**
+ * @var string DATABASE
+ */
+const DATABASE  = 'testdb';
+
+$couch = new CouchDb(CONFIG);

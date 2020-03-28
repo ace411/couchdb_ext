@@ -1,3 +1,9 @@
+/**
+ * @file http.cpp
+ * @author Lochemem Bruno Michael (lochbm@gmail.com)
+ * @brief 
+ * @version 0.1.0
+ */
 #include <curl/curl.h>
 #include <future>
 #include <thread>
@@ -15,6 +21,17 @@ typedef std::tuple<std::string, std::string> StrTuple;
 
 const static StrTuple scheme("http://", "https://");
 
+/**
+ * @brief generates appropriate CouchDB URI from configuration options
+ * 
+ * @tparam S 
+ * @tparam L 
+ * @param host 
+ * @param user 
+ * @param pwd 
+ * @param port 
+ * @return S 
+ */
 template <typename S, typename L>
 auto uriGen(S host, S user, S pwd, L port) -> S
 {
@@ -26,6 +43,12 @@ auto uriGen(S host, S user, S pwd, L port) -> S
     return retval;
 }
 
+/**
+ * @brief Appends headers to CURL instance
+ * 
+ * @tparam C 
+ * @param curl 
+ */
 template <typename C>
 void appHeaders(C curl)
 {
@@ -36,6 +59,15 @@ void appHeaders(C curl)
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
 }
 
+/**
+ * @brief Appends HTTP auth to CURL instance
+ * 
+ * @tparam C 
+ * @tparam S 
+ * @param curl 
+ * @param credentials 
+ * @param url 
+ */
 template <typename C, typename S>
 void appAuth(C curl, S &credentials, S &url)
 {
@@ -46,6 +78,16 @@ void appAuth(C curl, S &credentials, S &url)
     }
 }
 
+/**
+ * @brief Appends HTTP verb to CURL instance
+ * 
+ * @tparam C 
+ * @tparam L 
+ * @tparam S 
+ * @param curl 
+ * @param method 
+ * @param data 
+ */
 template <typename C, typename L, typename S>
 void appMethod(C curl, L method, S &data)
 {
@@ -71,6 +113,14 @@ void appMethod(C curl, L method, S &data)
     }
 }
 
+/**
+ * @brief Appends certificate to CURL instance
+ * 
+ * @tparam C 
+ * @tparam S 
+ * @param curl 
+ * @param url 
+ */
 template <typename C, typename S>
 void appCert(C curl, S &url)
 {
@@ -78,6 +128,12 @@ void appCert(C curl, S &url)
         curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem");
 }
 
+/**
+ * @brief Throws PHP error in the event of CURL failure(s)
+ * 
+ * @tparam T 
+ * @param code 
+ */
 template <typename T>
 void phpCurlError(T code)
 {
@@ -119,6 +175,18 @@ void phpCurlError(T code)
     }
 }
 
+/**
+ * @brief Makes CURL request
+ * 
+ * @tparam S 
+ * @tparam L 
+ * @param url 
+ * @param method 
+ * @param credentials 
+ * @param data 
+ * @param timeout 
+ * @return std::string 
+ */
 template <typename S, typename L>
 auto curlRequest(S &url, L method, S &credentials, S &data, L timeout) -> std::string
 {
@@ -158,6 +226,18 @@ auto curlRequest(S &url, L method, S &credentials, S &data, L timeout) -> std::s
     return result;
 }
 
+/**
+ * @brief Runs CURL request in asynchronous future instance
+ * 
+ * @tparam S 
+ * @tparam L 
+ * @param url 
+ * @param method 
+ * @param credentials 
+ * @param data 
+ * @param timeout 
+ * @return std::string 
+ */
 template <typename S, typename L>
 auto futureCurl(S &url, L method, S &credentials, S &data, L timeout) -> std::string
 {
@@ -167,24 +247,66 @@ auto futureCurl(S &url, L method, S &credentials, S &data, L timeout) -> std::st
     return future.get();
 }
 
+/**
+ * @brief Performs GET request
+ * 
+ * @tparam S 
+ * @tparam L 
+ * @param url 
+ * @param credentials 
+ * @param timeout 
+ * @return std::string 
+ */
 template <typename S, typename L>
 auto getRequest(S &url, S &credentials, L timeout) -> std::string
 {
     return futureCurl<const std::string, long>(url, GET_OPT, credentials, "", timeout);
 }
 
+/**
+ * @brief Performs PUT request
+ * 
+ * @tparam S 
+ * @tparam L 
+ * @param url 
+ * @param credentials 
+ * @param data 
+ * @param timeout 
+ * @return std::string 
+ */
 template <typename S, typename L>
 auto putRequest(S &url, S &credentials, S &data, L timeout) -> std::string
 {
     return futureCurl<const std::string, long>(url, PUT_OPT, credentials, data, timeout);
 }
 
+/**
+ * @brief Performs DELETE request
+ * 
+ * @tparam S 
+ * @tparam L 
+ * @param url 
+ * @param credentials 
+ * @param timeout 
+ * @return std::string 
+ */
 template <typename S, typename L>
 auto delRequest(S &url, S &credentials, L timeout) -> std::string
 {
     return futureCurl<const std::string, long>(url, DEL_OPT, credentials, "", timeout);
 }
 
+/**
+ * @brief Performs POST request
+ * 
+ * @tparam S 
+ * @tparam L 
+ * @param url 
+ * @param credentials 
+ * @param data 
+ * @param timeout 
+ * @return std::string 
+ */
 template <typename S, typename L>
 auto postRequest(S &url, S &credentials, S &data, L timeout) -> std::string
 {

@@ -1,16 +1,16 @@
+/**
+ * @file couch.cpp
+ * @author Lochemem Bruno Michael (lochbm@gmail.com)
+ * @brief 
+ * @version 0.1.0
+ */
 #include "php_couchdb_ext.h"
 #include "request.h"
+#include "ext/standard/php_var.h"
 
 #ifdef HAVE_SPL
 #include "ext/spl/spl_exceptions.h"
 #endif
-
-#define COUCH_DEL_DB 1
-#define COUCH_DEL_DOC 2
-#define COUCH_DEL_DDOC 3
-
-#define COUCH_UPDATE_SINGLE 1
-#define COUCH_UPDATE_MULTIPLE 2
 
 zend_object_handlers request_object_handlers;
 
@@ -30,28 +30,67 @@ static inline request_object *php_request_obj_from_obj(zend_object *obj)
 zend_class_entry *request_ce;
 zend_class_entry *request_exception_ce;
 
+/* {{{ proto CouchDb::__construct(array options)
+*/
 PHP_METHOD(Request, __construct)
 {
-    zend_string *host;
-    zend_string *user;
-    zend_string *pwd;
-    long timeout = 60, port = 5984;
+    // database options array
+    zval *options;
+    // database option keys
+    zend_string *host, *user, *pass, *timeout, *port;
+
+    long portVal, timeoutVal;
+
     zval *id = getThis();
     request_object *intern;
 
-    ZEND_PARSE_PARAMETERS_START(3, 5)
-    Z_PARAM_STR(host)
-    Z_PARAM_STR(user)
-    Z_PARAM_STR(pwd)
-    Z_PARAM_LONG(port)
-    Z_PARAM_LONG(timeout)
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+    Z_PARAM_ARRAY(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    host = zend_string_init("host", sizeof("host") - 1, 1);
+    user = zend_string_init("user", sizeof("user") - 1, 1);
+    pass = zend_string_init("pass", sizeof("pass") - 1, 1);
+    port = zend_string_init("port", sizeof("port") - 1, 1);
+    timeout = zend_string_init("timeout", sizeof("timeout") - 1, 1);
+
+    // check if host, user, and pass keys exist
+    if (!zend_hash_exists(HASH_OF(options), host) ||
+        !zend_hash_exists(HASH_OF(options), user) ||
+        !zend_hash_exists(HASH_OF(options), pass))
+    {
+        zend_string_release(port);
+        zend_string_release(timeout);
+        zend_throw_exception(request_exception_ce,
+                             "'host', 'user', and 'pass' are mandatory config options",
+                             0 TSRMLS_CC);
+        RETURN_NULL();
+    }
 
     intern = Z_TSTOBJ_P(id);
     if (intern != NULL)
-        intern->request = new Request(ZSTR_VAL(host), ZSTR_VAL(user), ZSTR_VAL(pwd), port, timeout);
-}
+    {
+        // set default port to 5984 if port key is absent
+        portVal = !zend_hash_exists(HASH_OF(options), port)
+                      ? long(5984)
+                      : Z_LVAL_P(zend_hash_find(HASH_OF(options), port));
 
+        // set default timeout to 60s if timeout key is absent
+        timeoutVal = !zend_hash_exists(HASH_OF(options), timeout)
+                         ? long(60)
+                         : Z_LVAL_P(zend_hash_find(HASH_OF(options), timeout));
+
+        intern->request = new Request(Z_STRVAL_P(zend_hash_find(HASH_OF(options), host)),
+                                      Z_STRVAL_P(zend_hash_find(HASH_OF(options), user)),
+                                      Z_STRVAL_P(zend_hash_find(HASH_OF(options), pass)),
+                                      portVal,
+                                      timeoutVal);
+    }
+}
+/* }}} */
+
+/* {{{ proto string CouchDb::uuids(int count)
+*/
 PHP_METHOD(Request, uuids)
 {
     long idCount = 1;
@@ -69,25 +108,42 @@ PHP_METHOD(Request, uuids)
         RETURN_STRING(retval.c_str());
     }
 }
+/* }}} */
 
+/* {{{ proto bool CouchDb::isAvailable(void)
+*/
 PHP_METHOD(Request, isAvailable)
 {
     zval *id = getThis();
     request_object *intern;
 
+#ifdef ZEND_PARSE_PARAMETERS_NONE
     ZEND_PARSE_PARAMETERS_NONE();
+#endif
+    if (zend_parse_parameters_none() == FAILURE)
+    {
+        RETURN_NULL();
+    }
 
     intern = Z_TSTOBJ_P(id);
     if (intern != NULL)
         RETURN_BOOL(intern->request->isAvailable());
 }
+/* }}} */
 
+/* {{{ proto string CouchDb::allDbs(void)
+*/
 PHP_METHOD(Request, allDbs)
 {
     zval *id = getThis();
     request_object *intern;
-
+#ifdef ZEND_PARSE_PARAMETERS_NONE
     ZEND_PARSE_PARAMETERS_NONE();
+#endif
+    if (zend_parse_parameters_none() == FAILURE)
+    {
+        RETURN_NULL();
+    }
 
     intern = Z_TSTOBJ_P(id);
     if (intern != NULL)
@@ -96,14 +152,17 @@ PHP_METHOD(Request, allDbs)
         RETURN_STRING(retval.c_str())
     }
 }
+/* }}} */
 
+/* {{{ proto string CouchDb::allDocs(string database)
+*/
 PHP_METHOD(Request, allDocs)
 {
-    zend_string *database;
+    zend_string *database; // *attrKey;
     std::string errStr("");
     zval *val;
     char *argSep = NULL;
-    zval *queryParams;
+    zval *queryParams; // *queryAttr, *finalQuery;
 
     smart_str queryBuild = {0};
 
@@ -115,14 +174,29 @@ PHP_METHOD(Request, allDocs)
     Z_PARAM_ARRAY(queryParams)
     ZEND_PARSE_PARAMETERS_END();
 
-    if (zend_hash_num_elements(HASH_OF(queryParams)) == 0 || ZSTR_LEN(database) == 0)
+    // throw exception if the query parameter count is zero or database name is empty
+    if (zend_hash_num_elements(HASH_OF(queryParams)) == 0 ||
+        ZSTR_LEN(database) == 0)
     {
         zend_string_release(database);
-        zend_throw_exception(request_exception_ce, "Parameters cannot be empty", 0 TSRMLS_CC);
+        zend_throw_exception(request_exception_ce,
+                             "Argument(s) cannot be empty",
+                             0 TSRMLS_CC);
         RETURN_NULL();
     }
 
-    if (php_url_encode_hash_ex(HASH_OF(queryParams), &queryBuild, NULL, 0, NULL, 0, NULL, 0, (Z_TYPE_P(queryParams) == IS_OBJECT ? queryParams : NULL), argSep, 1) == FAILURE)
+    // url-encode query parameters; throw exception if parameters cannot be encoded
+    if (php_url_encode_hash_ex(HASH_OF(queryParams),
+                               &queryBuild,
+                               NULL,
+                               0,
+                               NULL,
+                               0,
+                               NULL,
+                               0,
+                               (Z_TYPE_P(queryParams) == IS_OBJECT ? queryParams : NULL),
+                               argSep,
+                               1) == FAILURE)
     {
         zend_string_release(database);
         zend_throw_exception(request_exception_ce, "Cannot encode query", 0 TSRMLS_CC);
@@ -140,10 +214,13 @@ PHP_METHOD(Request, allDocs)
         RETURN_STRING(retval.c_str());
     }
 }
+/* }}} */
 
+/* {{{ proto string CouchDb::insertDocs(string database, array docs)
+*/
 PHP_METHOD(Request, insertDocs)
 {
-    zend_string *database;
+    zend_string *database, *docKey;
     zval *docData;
     smart_str jsonData = {0};
 
@@ -155,10 +232,27 @@ PHP_METHOD(Request, insertDocs)
     Z_PARAM_ARRAY(docData)
     ZEND_PARSE_PARAMETERS_END();
 
+    docKey = zend_string_init("docs", sizeof("docs") - 1, 1);
+
+    // throw exception if parameters are empty
     if (zend_hash_num_elements(HASH_OF(docData)) == 0 || ZSTR_LEN(database) == 0)
     {
+        zend_string_release(docKey);
         zend_string_release(database);
-        zend_throw_exception(request_exception_ce, "Parameters cannot be empty", 0 TSRMLS_CC);
+        zend_throw_exception(request_exception_ce,
+                             "Argument(s) cannot be empty",
+                             0 TSRMLS_CC);
+        RETURN_NULL();
+    }
+
+    // throw exception if docs key is missing
+    if (!zend_hash_exists(Z_ARRVAL_P(docData), docKey))
+    {
+        zend_string_release(docKey);
+        zend_string_release(database);
+        zend_throw_exception(request_exception_ce,
+                             "'docs' key is missing",
+                             0 TSRMLS_CC);
         RETURN_NULL();
     }
 
@@ -168,13 +262,17 @@ PHP_METHOD(Request, insertDocs)
     intern = Z_TSTOBJ_P(id);
     if (intern != NULL)
     {
-        bool retval = intern->request->insertDocs(ZSTR_VAL(database), ZSTR_VAL(jsonData.s));
+        bool retval = intern->request->insertDocs(ZSTR_VAL(database),
+                                                  ZSTR_VAL(jsonData.s));
         smart_str_free(&jsonData);
         efree(jsonData.s);
         RETURN_BOOL(retval);
     }
 }
+/* }}} */
 
+/* {{{ proto string CouchDb::search(string database, array query)
+*/
 PHP_METHOD(Request, search)
 {
     zend_string *database;
@@ -195,15 +293,20 @@ PHP_METHOD(Request, search)
     {
         zend_string_release(database);
         zend_string_release(selectorKey);
-        zend_throw_exception(request_exception_ce, "Parameters cannot be empty", 0 TSRMLS_CC);
+        zend_throw_exception(request_exception_ce,
+                             "Argument(s) cannot be empty",
+                             0 TSRMLS_CC);
         RETURN_NULL();
     }
 
+    // check if selector key exists
     if (!zend_hash_exists(HASH_OF(query), selectorKey))
     {
         zend_string_release(database);
         zend_string_release(selectorKey);
-        zend_throw_exception(request_exception_ce, "'selector' key is missing", 0 TSRMLS_CC);
+        zend_throw_exception(request_exception_ce,
+                             "'selector' key is missing",
+                             0 TSRMLS_CC);
         RETURN_NULL();
     }
 
@@ -213,17 +316,20 @@ PHP_METHOD(Request, search)
     intern = Z_TSTOBJ_P(id);
     if (intern != NULL)
     {
-        std::string retval = intern->request->search(ZSTR_VAL(database), ZSTR_VAL(jsonData.s));
+        std::string retval = intern->request->search(ZSTR_VAL(database),
+                                                     ZSTR_VAL(jsonData.s));
         smart_str_free(&jsonData);
         RETURN_STRING(retval.c_str());
         zend_string_release(selectorKey);
     }
 }
+/* }}} */
 
+/* {{{ proto string CouchDb::createDdoc(string database, string ddoc, array options)
+*/
 PHP_METHOD(Request, createDdoc)
 {
-    zend_string *database;
-    zend_string *ddoc;
+    zend_string *database, *ddoc;
     zval *docData;
     smart_str jsonData = {0};
 
@@ -242,7 +348,9 @@ PHP_METHOD(Request, createDdoc)
     {
         zend_string_release(ddoc);
         zend_string_release(database);
-        zend_throw_exception(request_exception_ce, "Parameters cannot be empty", 0 TSRMLS_CC);
+        zend_throw_exception(request_exception_ce,
+                             "Argument(s) cannot be empty",
+                             0 TSRMLS_CC);
         RETURN_NULL();
     }
 
@@ -252,12 +360,17 @@ PHP_METHOD(Request, createDdoc)
     intern = Z_TSTOBJ_P(id);
     if (intern != NULL)
     {
-        bool retval = intern->request->createDdoc(ZSTR_VAL(database), ZSTR_VAL(ddoc), ZSTR_VAL(jsonData.s));
+        bool retval = intern->request->createDdoc(ZSTR_VAL(database),
+                                                  ZSTR_VAL(ddoc),
+                                                  ZSTR_VAL(jsonData.s));
         smart_str_free(&jsonData);
         RETURN_BOOL(retval);
     }
 }
+/* }}} */
 
+/* {{{ proto string CouchDb::queryView(string database, string ddoc, string view, array options)
+*/
 PHP_METHOD(Request, queryView)
 {
     zval *queryData;
@@ -285,16 +398,30 @@ PHP_METHOD(Request, queryView)
         zend_string_release(database);
         zend_string_release(ddoc);
         zend_string_release(view);
-        zend_throw_exception(request_exception_ce, "Parameters cannot be empty", 0 TSRMLS_CC);
+        zend_throw_exception(request_exception_ce,
+                             "Argument(s) cannot be empty",
+                             0 TSRMLS_CC);
         RETURN_NULL();
     }
 
-    if (php_url_encode_hash_ex(HASH_OF(queryData), &queryStr, NULL, 0, NULL, 0, NULL, 0, (Z_TYPE_P(queryData) == IS_OBJECT ? queryData : NULL), argSep, 1) == FAILURE)
+    if (php_url_encode_hash_ex(HASH_OF(queryData),
+                               &queryStr,
+                               NULL,
+                               0,
+                               NULL,
+                               0,
+                               NULL,
+                               0,
+                               (Z_TYPE_P(queryData) == IS_OBJECT ? queryData : NULL),
+                               argSep,
+                               1) == FAILURE)
     {
         zend_string_release(database);
         zend_string_release(ddoc);
         zend_string_release(view);
-        zend_throw_exception(request_exception_ce, "Cannot encode parameters", 0 TSRMLS_CC);
+        zend_throw_exception(request_exception_ce,
+                             "Cannot encode query parameters",
+                             0 TSRMLS_CC);
         RETURN_NULL();
     }
 
@@ -303,13 +430,19 @@ PHP_METHOD(Request, queryView)
     intern = Z_TSTOBJ_P(id);
     if (intern != NULL)
     {
-        std::string retval = intern->request->queryView(ZSTR_VAL(database), ZSTR_VAL(ddoc), ZSTR_VAL(view), ZSTR_VAL(queryStr.s));
+        std::string retval = intern->request->queryView(ZSTR_VAL(database),
+                                                        ZSTR_VAL(ddoc),
+                                                        ZSTR_VAL(view),
+                                                        ZSTR_VAL(queryStr.s));
         smart_str_free(&queryStr);
         efree(queryStr.s);
         RETURN_STRING(retval.c_str());
     }
 }
+/* }}} */
 
+/* {{{ proto string CouchDb::createDb(string database)
+*/
 PHP_METHOD(Request, createDb)
 {
     zend_string *database;
@@ -323,7 +456,9 @@ PHP_METHOD(Request, createDb)
     if (ZSTR_LEN(database) == 0)
     {
         zend_string_release(database);
-        zend_throw_exception(request_exception_ce, "Parameter cannot be empty", 0 TSRMLS_CC);
+        zend_throw_exception(request_exception_ce,
+                             "Database name cannot be empty",
+                             0 TSRMLS_CC);
         RETURN_NULL();
     }
 
@@ -334,207 +469,268 @@ PHP_METHOD(Request, createDb)
         zend_string_release(database);
     }
 }
+/* }}} */
 
-PHP_METHOD(Request, _delete)
+/* {{{ proto bool CouchDb::deleteDb(string database)
+*/
+PHP_METHOD(Request, deleteDb)
 {
-    long opt;
-    zval *opts;
-    zval *retOpt;
-    zval *_retOpt;
-    zval *__retOpt;
-    zend_string *dbkey;
-    zend_string *idkey;
-    zend_string *revkey;
-    std::string strOpt("");
+    zend_string *database;
+    zval *id = getThis();
+    request_object *intern;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+    Z_PARAM_STR(database)
+    ZEND_PARSE_PARAMETERS_END();
+
+    if (ZSTR_LEN(database) == 0)
+    {
+        zend_string_release(database);
+        zend_throw_exception(request_exception_ce,
+                             "Database name cannot be empty",
+                             0 TSRMLS_CC);
+        RETURN_NULL();
+    }
+
+    intern = Z_TSTOBJ_P(id);
+    if (intern != NULL)
+    {
+        RETURN_BOOL(intern->request->deleteOpt(ZSTR_VAL(database)));
+        zend_string_release(database);
+    }
+}
+/* }}} */
+
+/* {{{ proto bool CouchDb::deleteDoc(string database, string docId, string docRev)
+*/
+PHP_METHOD(Request, deleteDoc)
+{
+    zend_string *database, *docId, *docRev;
+    zval *params;
+
+    zval *id = getThis();
+    request_object *intern;
+
+    std::string deleteParam("");
+
+    ZEND_PARSE_PARAMETERS_START(3, 3)
+    Z_PARAM_STR(database)
+    Z_PARAM_STR(docId)
+    Z_PARAM_STR(docRev)
+    ZEND_PARSE_PARAMETERS_END();
+
+    // throw an exception if any of the arguments is empty
+    if (ZSTR_LEN(database) == 0 ||
+        ZSTR_LEN(docRev) == 0 ||
+        ZSTR_LEN(docId) == 0)
+    {
+        zend_string_release(database);
+        zend_string_release(docRev);
+        zend_string_release(docId);
+        zend_throw_exception(request_exception_ce,
+                             "Argument(s) cannot be empty",
+                             0 TSRMLS_CC);
+        RETURN_NULL();
+    }
+
+    intern = Z_TSTOBJ_P(id);
+    if (intern != NULL)
+    {
+        // {host}/{database}/{docId}?rev={docRev}
+        deleteParam += ZSTR_VAL(database) +
+                       std::string("/") +
+                       ZSTR_VAL(docId) +
+                       std::string("?rev=") +
+                       ZSTR_VAL(docRev);
+
+        RETURN_BOOL(intern->request->deleteOpt(deleteParam));
+
+        zend_string_release(docId);
+        zend_string_release(docRev);
+        zend_string_release(database);
+    }
+}
+/* }}} */
+
+/* {{{ proto bool CouchDb::deleteDocs(string database, array docs)
+*/
+PHP_METHOD(Request, deleteDocs)
+{
+    zend_string *database;
+    zval *docs, *jsonFinal, *jsonDocs, *docVal;
+
+    smart_str jsonData = {0};
 
     zval *id = getThis();
     request_object *intern;
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
-    Z_PARAM_LONG(opt)
-    Z_PARAM_ARRAY(opts)
+    Z_PARAM_STR(database)
+    Z_PARAM_ARRAY(docs)
     ZEND_PARSE_PARAMETERS_END();
 
-    if (zend_hash_num_elements(HASH_OF(opts)) == 0)
+    if (zend_hash_num_elements(HASH_OF(docs)) == 0)
     {
-        zend_throw_exception(request_exception_ce, "Options list cannot be empty", 0 TSRMLS_CC);
+        zend_string_release(database);
+        zend_throw_exception(request_exception_ce,
+                             "docs array cannot be empty",
+                             0 TSRMLS_CC);
         RETURN_NULL();
     }
 
-    dbkey = zend_string_init("database", (sizeof("database") - 1), 1);
-    revkey = zend_string_init("_rev", (sizeof("_rev") - 1), 1);
-    idkey = zend_string_init("_id", (sizeof("_id") - 1), 1);
-
-    if (!zend_hash_exists(HASH_OF(opts), dbkey))
-    {
-        zend_string_release(dbkey);
-        zend_string_release(idkey);
-        zend_string_release(revkey);
-        zend_throw_exception(request_exception_ce, "'database' key is missing", 0 TSRMLS_CC);
-        RETURN_NULL();
-    }
-
-    retOpt = zend_hash_find(HASH_OF(opts), dbkey);
-    _retOpt = zend_hash_find(HASH_OF(opts), revkey);
-    __retOpt = zend_hash_find(HASH_OF(opts), idkey);
-
-    strOpt += Z_STRVAL_P(retOpt);
-    zend_string_release(dbkey);
+    array_init(jsonDocs);
+    array_init(jsonFinal);
 
     intern = Z_TSTOBJ_P(id);
     if (intern != NULL)
     {
-        switch (opt)
+        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(docs), docVal)
         {
-        case COUCH_DEL_DB:
-            RETURN_BOOL(intern->request->deleteOpt(strOpt));
-            break;
+            zval dup;
+            ZVAL_COPY(&dup, docVal);
 
-        case COUCH_DEL_DOC:
-            if (!zend_hash_exists(HASH_OF(opts), idkey) ||
-                !zend_hash_exists(HASH_OF(opts), revkey))
-            {
-                zend_throw_exception(request_exception_ce, "'_id' or '_rev' key is missing", 0 TSRMLS_CC);
-                RETURN_NULL();
-            }
+            SEPARATE_ARRAY(&dup); // handle copy-on-write for shared array
+            convert_to_array(&dup);
 
-            zend_string_release(idkey);
-            zend_string_release(revkey);
-
-            strOpt += std::string("/") + Z_STRVAL_P(__retOpt) + "?rev=" + Z_STRVAL_P(_retOpt);
-            RETURN_BOOL(intern->request->deleteOpt(strOpt));
-            break;
-
-        default:
-            zend_string_release(idkey);
-            zend_string_release(revkey);
-            zend_throw_exception(request_exception_ce, "Invalid option", 0 TSRMLS_CC);
-            RETURN_NULL();
-            break;
+            add_assoc_bool(&dup, "_deleted", 1);
+            add_next_index_zval(jsonDocs, &dup);
         }
+        ZEND_HASH_FOREACH_END();
+
+        add_assoc_zval(jsonFinal, "docs", jsonDocs);
+        php_json_encode(&jsonData, jsonFinal, 0);
+        smart_str_0(&jsonData);
+
+        RETURN_BOOL(intern->request->insertDocs(ZSTR_VAL(database),
+                                                ZSTR_VAL(jsonData.s)));
+        smart_str_free(&jsonData);
+        zend_string_release(database);
     }
 }
+/* }}} */
 
-PHP_METHOD(Request, update)
+/* {{{ proto bool CouchDb::updateDoc(string database, string docId, string docRev, array doc)
+*/
+PHP_METHOD(Request, updateDoc)
 {
-    zend_string *database;
-    long opt;
-    zval *update;
+    zend_string *database, *docId, *docRev;
+    zval *doc;
 
-    zend_string *idkey;
-    zend_string *revkey;
-
-    smart_str docData = {0};
+    smart_str jsonData = {0};
 
     zval *id = getThis();
     request_object *intern;
 
-    ZEND_PARSE_PARAMETERS_START(3, 3)
+    ZEND_PARSE_PARAMETERS_START(4, 4)
     Z_PARAM_STR(database)
-    Z_PARAM_LONG(opt)
-    Z_PARAM_ARRAY(update)
+    Z_PARAM_STR(docId)
+    Z_PARAM_STR(docRev)
+    Z_PARAM_ARRAY(doc)
     ZEND_PARSE_PARAMETERS_END();
 
-    if (zend_hash_num_elements(HASH_OF(update)) == 0 ||
-        ZSTR_LEN(database) == 0)
+    // throw exception if any of the arguments are empty
+    if (zend_hash_num_elements(HASH_OF(doc)) == 0 ||
+        ZSTR_LEN(database) == 0 ||
+        ZSTR_LEN(docRev) == 0 ||
+        ZSTR_LEN(docId) == 0)
     {
+        zend_string_release(docId);
+        zend_string_release(docRev);
         zend_string_release(database);
-        zend_throw_exception(request_exception_ce, "Parameters cannot be empty", 0 TSRMLS_CC);
+        zend_throw_exception(request_exception_ce,
+                             "Argument(s) cannot be empty",
+                             0 TSRMLS_CC);
         RETURN_NULL();
     }
 
-    idkey = zend_string_init("_id", sizeof("_id") - 1, 1);
-    revkey = zend_string_init("_rev", sizeof("_rev") - 1, 1);
-
     intern = Z_TSTOBJ_P(id);
-
     if (intern != NULL)
     {
-        switch (opt)
-        {
-        case COUCH_UPDATE_SINGLE:
-            zend_string *dockey;
+        php_json_encode(&jsonData, doc, 0);
+        smart_str_0(&jsonData);
 
-            zval *_opt;
-            zval *__opt;
-            zval *___opt;
-
-            dockey = zend_string_init("doc", sizeof("doc") - 1, 1);
-
-            if (!zend_hash_exists(HASH_OF(update), idkey) ||
-                !zend_hash_exists(HASH_OF(update), revkey) ||
-                !zend_hash_exists(HASH_OF(update), dockey))
-            {
-                zend_string_release(dockey);
-                zend_string_release(database);
-                zend_string_release(idkey);
-                zend_string_release(revkey);
-                zend_throw_exception(request_exception_ce, "'_id', '_rev', or 'doc' key is missing", 0 TSRMLS_CC);
-                RETURN_NULL();
-            }
-
-            _opt = zend_hash_find(HASH_OF(update), idkey);
-            __opt = zend_hash_find(HASH_OF(update), revkey);
-            ___opt = zend_hash_find(HASH_OF(update), dockey);
-
-            if (Z_TYPE_P(___opt) != IS_ARRAY)
-            {
-                zend_string_release(dockey);
-                zend_string_release(database);
-                zend_string_release(idkey);
-                zend_string_release(revkey);
-                zend_throw_exception(request_exception_ce, "Document should be an array", 0 TSRMLS_CC);
-                RETURN_NULL();
-            }
-
-            php_json_encode(&docData, ___opt, 0);
-            smart_str_0(&docData);
-
-            RETURN_BOOL(intern->request->updateSingle(ZSTR_VAL(database),
-                                                      Z_STRVAL_P(_opt),
-                                                      Z_STRVAL_P(__opt),
-                                                      ZSTR_VAL(docData.s)));
-            break;
-
-        case COUCH_UPDATE_MULTIPLE:
-            zval *retval;
-            zval *_docs;
-
-            ZEND_HASH_FOREACH_VAL(HASH_OF(update), retval)
-            {
-                if (Z_TYPE_P(retval) != IS_ARRAY)
-                    RETURN_BOOL(false);
-
-                if (!zend_hash_exists(Z_ARRVAL_P(retval), idkey) || !zend_hash_exists(Z_ARRVAL_P(retval), revkey))
-                    RETURN_BOOL(false);
-            }
-            ZEND_HASH_FOREACH_END();
-
-            array_init(_docs);
-            add_assoc_zval(_docs, "docs", update);
-
-            php_json_encode(&docData, _docs, 0);
-            smart_str_0(&docData);
-
-            RETURN_BOOL(intern->request->insertDocs(ZSTR_VAL(database), ZSTR_VAL(docData.s)));
-            break;
-
-        default:
-            RETURN_BOOL(false);
-            break;
-        }
-
-        smart_str_free(&docData);
-        efree(docData.s);
+        RETURN_BOOL(intern->request->updateSingle(ZSTR_VAL(database),
+                                                  ZSTR_VAL(docId),
+                                                  ZSTR_VAL(docRev),
+                                                  ZSTR_VAL(jsonData.s)));
+        smart_str_free(&jsonData);
+        zend_string_release(docId);
+        zend_string_release(docRev);
+        zend_string_release(database);
     }
 }
+/* }}} */
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_constructor, 0, 0, 5)
-ZEND_ARG_INFO(0, host)
-ZEND_ARG_INFO(0, user)
-ZEND_ARG_INFO(0, pwd)
-ZEND_ARG_INFO(0, port)
-ZEND_ARG_INFO(0, timeout)
+/* {{{ proto bool CouchDb::updateDocs(string database, array docs)
+*/
+PHP_METHOD(Request, updateDocs)
+{
+    zend_string *database, *docKey;
+    zval *doc, *docVal;
+
+    smart_str jsonData = {0};
+
+    zval *id = getThis();
+    request_object *intern;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+    Z_PARAM_STR(database)
+    Z_PARAM_ARRAY(doc)
+    ZEND_PARSE_PARAMETERS_END();
+
+    docKey = zend_string_init("docs", sizeof("docs") - 1, 1);
+
+    if (zend_hash_num_elements(HASH_OF(doc)) == 0 ||
+        ZSTR_LEN(database) == 0)
+    {
+        zend_string_release(docKey);
+        zend_string_release(database);
+        zend_throw_exception(request_exception_ce,
+                             "Argument(s) cannot be empty",
+                             0 TSRMLS_CC);
+        RETURN_NULL();
+    }
+
+    // throw exception if docs key is missing
+    if (!zend_hash_exists(Z_ARRVAL_P(doc), docKey))
+    {
+        zend_string_release(docKey);
+        zend_string_release(database);
+        zend_throw_exception(request_exception_ce,
+                             "'docs' key is missing",
+                             0 TSRMLS_CC);
+        RETURN_NULL();
+    }
+
+    intern = Z_TSTOBJ_P(id);
+    if (intern != NULL)
+    {
+        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(doc), docVal)
+        {
+            if (Z_TYPE_P(docVal) != IS_ARRAY)
+            {
+                zend_throw_exception(request_exception_ce,
+                                     "Only array values are accepted",
+                                     0 TSRMLS_CC);
+                RETURN_NULL();
+            }
+        }
+        ZEND_HASH_FOREACH_END();
+
+        php_json_encode(&jsonData, doc, 0);
+        smart_str_0(&jsonData);
+
+        RETURN_BOOL(intern->request->insertDocs(ZSTR_VAL(database),
+                                                ZSTR_VAL(jsonData.s)));
+        smart_str_free(&jsonData);
+        zend_string_release(database);
+        zend_string_release(docKey);
+    }
+}
+/* }}} */
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_constructor, 0, 0, 1)
+ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO();
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_uuids, 0, 0, 1)
@@ -548,7 +744,7 @@ ZEND_END_ARG_INFO();
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_insertdocs, 0, 0, 2)
 ZEND_ARG_INFO(0, database)
-ZEND_ARG_ARRAY_INFO(0, data, 0)
+ZEND_ARG_ARRAY_INFO(0, documents, 0)
 ZEND_END_ARG_INFO();
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_search, 0, 0, 2)
@@ -573,15 +769,22 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_createdb, 0, 0, 1)
 ZEND_ARG_INFO(0, database)
 ZEND_END_ARG_INFO();
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_delete, 0, 0, 2)
-ZEND_ARG_INFO(0, option)
-ZEND_ARG_ARRAY_INFO(0, params, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_deletedoc, 0, 0, 3)
+ZEND_ARG_INFO(0, database)
+ZEND_ARG_INFO(0, docId)
+ZEND_ARG_INFO(0, docRev)
 ZEND_END_ARG_INFO();
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_update, 0, 0, 3)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_deletedocs, 0, 0, 2)
 ZEND_ARG_INFO(0, database)
-ZEND_ARG_INFO(0, option)
-ZEND_ARG_ARRAY_INFO(0, update, 0)
+ZEND_ARG_ARRAY_INFO(0, documents, 0)
+ZEND_END_ARG_INFO();
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_updatesingle, 0, 0, 4)
+ZEND_ARG_INFO(0, database)
+ZEND_ARG_INFO(0, docId)
+ZEND_ARG_INFO(0, docRev)
+ZEND_ARG_ARRAY_INFO(0, document, 0)
 ZEND_END_ARG_INFO();
 
 static const zend_function_entry request_methods[] = {
@@ -595,9 +798,12 @@ static const zend_function_entry request_methods[] = {
                                 PHP_ME(Request, createDdoc, arginfo_createddoc, ZEND_ACC_PUBLIC)
                                     PHP_ME(Request, queryView, arginfo_queryview, ZEND_ACC_PUBLIC)
                                         PHP_ME(Request, createDb, arginfo_createdb, ZEND_ACC_PUBLIC)
-                                            PHP_ME(Request, _delete, arginfo_delete, ZEND_ACC_PUBLIC)
-                                                PHP_ME(Request, update, arginfo_update, ZEND_ACC_PUBLIC)
-                                                    PHP_FE_END};
+                                            PHP_ME(Request, deleteDb, arginfo_createdb, ZEND_ACC_PUBLIC)
+                                                PHP_ME(Request, deleteDoc, arginfo_deletedoc, ZEND_ACC_PUBLIC)
+                                                    PHP_ME(Request, deleteDocs, arginfo_deletedocs, ZEND_ACC_PUBLIC)
+                                                        PHP_ME(Request, updateDoc, arginfo_updatesingle, ZEND_ACC_PUBLIC)
+                                                            PHP_ME(Request, updateDocs, arginfo_deletedocs, ZEND_ACC_PUBLIC)
+                                                                PHP_FE_END};
 
 zend_object *request_object_new(zend_class_entry *ce TSRMLS_DC)
 {
@@ -656,29 +862,44 @@ PHP_MINIT_FUNCTION(request)
         &exception_ce, zend_exception_get_default(TSRMLS_C));
 #endif
 
-    REGISTER_LONG_CONSTANT("COUCH_DEL_DB", COUCH_DEL_DB, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("COUCH_DEL_DOC", COUCH_DEL_DOC, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("COUCH_UPDATE_SINGLE", COUCH_UPDATE_SINGLE, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("COUCH_UPDATE_MULTIPLE", COUCH_UPDATE_MULTIPLE, CONST_CS | CONST_PERSISTENT);
+    return SUCCESS;
+}
+
+PHP_MINFO_FUNCTION(request)
+{
+    // print extension information
+    php_info_print_table_start();
+    php_info_print_table_header(2, "couchdb_ext support", "enabled");
+    php_info_print_table_header(2, "couchdb_ext version", PHP_COUCHDB_EXT_EXTVER);
+    php_info_print_table_header(2, "couchdb_ext author", "Lochemem Bruno Michael <lochbm@gmail.com>");
+    php_info_print_table_end();
+}
+
+PHP_RINIT_FUNCTION(request)
+{
+#if defined(ZTS) && defined(COMPILE_DL_COUCHDB_EXT)
+    ZEND_TSRMLS_CACHE_UPDATE();
+#endif
 
     return SUCCESS;
 }
 
-static const zend_module_dep request_deps[] = {
+/*static const zend_module_dep request_deps[] = {
     ZEND_MOD_REQUIRED("json")
-        ZEND_MOD_END};
+        ZEND_MOD_END};*/
 
 zend_module_entry couchdb_ext_module_entry = {
-    STANDARD_MODULE_HEADER_EX, NULL,
-    request_deps,
+    STANDARD_MODULE_HEADER,
     PHP_COUCHDB_EXT_EXTNAME,
     NULL,
-    PHP_MINIT(request),
-    NULL,
-    NULL,
-    NULL,
-    NULL,
+    PHP_MINIT(request),            // MINIT
+    NULL,                          // MSHUTDOWN
+    NULL,                          // RINIT
+    NULL,                          // RSHUTDOWN
+    PHP_MINFO(request),            // MINFO
+#if ZEND_MODULE_API_NO >= 20170718 // check if PHP version is greater than 7.2
     PHP_COUCHDB_EXT_EXTVER,
+#endif
     STANDARD_MODULE_PROPERTIES};
 
 #ifdef COMPILE_DL_COUCHDB_EXT
