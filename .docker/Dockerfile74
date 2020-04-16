@@ -1,9 +1,0 @@
-MAINTAINER Lochemem Bruno Michael <lochbm@gmail.com>
-
-RUN apt-get install libcurl4-openssl-dev && \
-    git clone https://github.com/ace411/couchdb_ext.git /usr/local/src/couchdb_ext && \
-    cd /usr/local/src/couchdb_ext && \
-    phpize && ./configure --enable-couchdb_ext CFLAGS="-lcurl -lpthread" && \
-    make && sudo make install && \
-    echo extension=couchdb_ext > /etc/php/7.4/cli/conf.d/couchdb_ext.ini && \
-    rm -rf /usr/local/src/couchdb_ext
