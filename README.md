@@ -20,7 +20,7 @@ Installing libcurl can be done by typing the following in a console of your choo
 sudo apt-get install libcurl4-openssl-dev
 ```
 
-Upon successful installation of libcurl, type the following - also in a console - to install ```couchdb_ext```:
+Upon successful installation of libcurl, type the following - also in a console - to install `couchdb_ext`:
 
 ```shell
 phpize
@@ -35,6 +35,10 @@ If you intend to run the tests in the tests directory, run the following command
 ```shell
 make test
 ```
+
+## Docker
+
+There exists a Docker image for this extension. You can find it in the [docker_couchdb_ext](https://github.com/peter279k/docker_couchdb_ext) repository.
 
 ## Rationale
 
@@ -68,7 +72,7 @@ echo $couch->uuids(5);
 
 ## API reference
 
-### __construct
+### \_\_construct
 
 ```
 __construct(array $options)
@@ -76,12 +80,12 @@ __construct(array $options)
 
 **Argument(s):**
 
-- ***options (array)*** - Configuration options array
-    - ***host (string)*** - CouchDB host
-    - ***user (string)*** - CouchDB username
-    - ***pass (string)*** - CouchDB password
-    - ***port (integer)*** - CouchDB port (defaults to 5984)
-    - ***timeout (integer)*** - Request timeout (defaults to 60)
+- **_options (array)_** - Configuration options array
+  - **_host (string)_** - CouchDB host
+  - **_user (string)_** - CouchDB username
+  - **_pass (string)_** - CouchDB password
+  - **_port (integer)_** - CouchDB port (defaults to 5984)
+  - **_timeout (integer)_** - Request timeout (defaults to 60)
 
 Creates an instance of the CouchDb class.
 
@@ -105,15 +109,15 @@ isAvailable(): bool
 
 **Argument(s):**
 
-> *None*
+> _None_
 
 Checks if the database at the constructor-specified location is present.
 
 ```php
-...
+
 if ($couch->isAvailable()) {
     echo $couch->allDocs('your-database');
-} 
+}
 ```
 
 ### uuids
@@ -124,12 +128,12 @@ uuids(int $count): string
 
 **Argument(s):**
 
-- ***count (integer)*** - The number of uuids to generate
+- **_count (integer)_** - The number of uuids to generate
 
 Generates a specified number of Universally Unique Identifiers.
 
 ```php
-...
+
 echo $couch->uuids(4); //returns JSON string
 ```
 
@@ -141,12 +145,11 @@ createDb(string $database): bool
 
 **Argument(s):**
 
-- ***database (string)*** - The name of the database
+- **_database (string)_** - The name of the database
 
 Creates a database.
 
 ```php
-...
 const DB_NAME = 'your-database';
 
 if ($couch->createDb(DB_NAME)) {
@@ -180,12 +183,28 @@ allDbs(): string
 Outputs a list of all the databases available on disk.
 
 ```php
-...
 $dbs = json_decode($couch->allDbs(), true);
 
 if (!in_array('your-database', $dbs)) {
     echo 'My database does not exist';
 }
+```
+
+### getDoc
+
+```
+getDoc(string $database, string $docId): string
+```
+
+**Argument(s):**
+
+- **_database (string)_** - CouchDB database
+- **_docId (string)_** - Unique document identifier
+
+Outputs the contents of a specified document.
+
+```php
+echo $couch->getDoc('your-database', 'doc-id');
 ```
 
 ### allDocs
@@ -196,16 +215,15 @@ allDocs(string $database, array $options): string
 
 **Argument(s):**
 
-- ***database (string)*** - The name of the database
-- ***options (array)*** - An array of [CouchDB-specific query options](http://docs.couchdb.org/en/stable/api/database/bulk-api.html#db-all-docs)
+- **_database (string)_** - The name of the database
+- **_options (array)_** - An array of [CouchDB-specific query options](http://docs.couchdb.org/en/stable/api/database/bulk-api.html#db-all-docs)
 
 Outputs a list of all documents in a specified database.
 
 ```php
-...
 echo $couch->allDocs('your-database', [
     'include_docs' => 'true',
-    'descending' => 'true' 
+    'descending' => 'true'
 ]);
 ```
 
@@ -217,13 +235,12 @@ insertDocs(string $database, array $docs): bool
 
 **Argument(s):**
 
-- ***database (string)*** - The name of the database
-- ***docs (array)*** - The data to insert in the database
+- **_database (string)_** - The name of the database
+- **_docs (array)_** - The data to insert in the database
 
 Inserts data into a CouchDB database.
 
 ```php
-...
 $couch->insertDocs('your-database', [
     'docs' => [
         [
@@ -248,13 +265,12 @@ search(string $database, array $query): string
 
 **Argument(s):**
 
-- ***database (string)*** - The name of the database
-- ***query (array)*** - The search query to execute
+- **_database (string)_** - The name of the database
+- **_query (array)_** - The search query to execute
 
 Performs a Mango-query-powered search.
 
 ```php
-...
 $github = $couch->search('your-database', [
     'selector'              => [
         'name' => ['$regex' => '(?i)ich']
@@ -266,6 +282,32 @@ $github = $couch->search('your-database', [
 var_dump(json_decode($github)); //returns a user object with specified fields
 ```
 
+### createIndex
+
+```
+createIndex(string $database, array $options, bool $partial = false): string
+```
+
+**Argument(s):**
+
+- **_database (string)_** - The name of the database
+- **_options (array)_** - Index creation options (see CouchDB documentation)
+- **_partial (boolean)_** - Partial flag that dictates index type (set to `true` if you intend to create a partial index)
+
+Creates a CouchDB index.
+
+```php
+echo $couch->createIndex('your-database', [
+    'index' => [
+      'fields' => ['servings', '_id', 'subtitle']
+    ],
+    'ddoc'  => 'type-servings',
+    'type'  => 'json'
+]);
+```
+
+> Setting the `$partial` flag to `true` means that the `partial_filter_selector` should feature in your options list.
+
 ### createDdoc
 
 ```
@@ -274,14 +316,13 @@ createDdoc(string $database, string $ddoc, array $options): bool
 
 **Argument(s):**
 
-- ***database (string)*** - The name of the database
-- ***ddoc (string)*** - The name of the design document
-- ***options (array)*** - ddoc options list (See documentation)
+- **_database (string)_** - The name of the database
+- **_ddoc (string)_** - The name of the design document
+- **_options (array)_** - ddoc options list (See documentation)
 
 Creates a design document.
 
 ```php
-...
 $couch->createDdoc('your-database', 'profileDoc', [
     'language'  => 'javascript',
     'views'     => [
@@ -300,15 +341,14 @@ queryView(string $database, string $ddoc, string $view, array $opts): string
 
 **Argument(s):**
 
-- ***database (string)*** - The name of the database
-- ***ddoc (string)*** - The name of the design document
-- ***view (string)*** - The view to query
-- ***options (array)*** - View query options (See CouchDB documentation)
+- **_database (string)_** - The name of the database
+- **_ddoc (string)_** - The name of the design document
+- **_view (string)_** - The view to query
+- **_options (array)_** - View query options (See CouchDB documentation)
 
 Queries a view in a specified database.
 
 ```php
-...
 ['key' => $key, 'value' => $val] = json_decode($couch->queryView('your-database', 'profileDoc', 'github-view', [
     'descending'    => 'true',
     'conflicts'     => 'false',
@@ -324,14 +364,14 @@ deleteDoc(string $database, string $docId, string $docRev): bool
 
 **Argument(s):**
 
-- ***database (string)*** - CouchDB database
-- ***docId (string)*** - Unique document identifier
-- ***docRev (string)*** - Unique document revision
+- **_database (string)_** - CouchDB database
+- **_docId (string)_** - Unique document identifier
+- **_docRev (string)_** - Unique document revision
 
 Deletes a specified document from a CouchDB database.
 
 ```php
-...
+
 $couch->deleteDoc('your-database', 'doc-id', 'doc-rev');
 ```
 
@@ -343,15 +383,14 @@ deleteDocs(string $database, array $docs): bool
 
 **Argument(s):**
 
-- ***database (string)*** - CouchDB database
-- ***docs (array)*** - A list of documents
+- **_database (string)_** - CouchDB database
+- **_docs (array)_** - A list of documents
 
 > `_id` and `_rev` keys are mandatory for each `docs` array entry
 
 Deletes documents from a CouchDB database.
 
 ```php
-...
 $couch->deleteDocs('your-database', [
     [
         '_id'   => 'Pilau',
@@ -372,15 +411,14 @@ updateDoc(string $database, string $docId, string $docRev, array $doc): bool
 
 **Argument(s):**
 
-- ***database (string)*** - The name of the database
-- ***docId (string)*** - Unique document identifier
-- ***docRev (string)*** - Unique document revision
-- ***doc (array)*** - The data containing the update contents
+- **_database (string)_** - The name of the database
+- **_docId (string)_** - Unique document identifier
+- **_docRev (string)_** - Unique document revision
+- **_doc (array)_** - The data containing the update contents
 
 Updates a document in a CouchDB database.
 
 ```php
-...
 $couch->updateDoc('your-database', 'Pilau', '1-599acfa0c7b36889599bde56276e444c', [
     'servings'  => 4,
     'subtitle'  => 'A delicious amalgam of rice and spices'
@@ -395,15 +433,14 @@ updateDocs(string $database, array $docs): bool
 
 **Argument(s):**
 
-- ***database (string)*** - CouchDB database
-- ***docs (array)*** - A list of documents to update
+- **_database (string)_** - CouchDB database
+- **_docs (array)_** - A list of documents to update
 
 > `_id` and `_rev` keys are mandatory for each `docs` array entry
 
 Updates multiple documents in a CouchDB database.
 
 ```php
-...
 $couch->updateDocs('your-database', [
     'docs' => [
         [
@@ -420,4 +457,25 @@ $couch->updateDocs('your-database', [
         ]
     ]
 ]);
+```
+
+### changes
+
+```
+changes(string $database, array $options = []): string
+```
+
+**Argument(s):**
+
+- **_database (string)_** - The name of the database
+- **_options (array)_** - An array of CouchDB-specific change tracking options
+
+Conveys changes made to a database.
+
+```php
+echo $couch->changes('your-database', [
+    'conflicts'     => 'true',
+    'include_docs'  => 'true',
+    'descending'    => 'true'
+])
 ```

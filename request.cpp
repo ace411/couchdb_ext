@@ -123,3 +123,36 @@ bool Request::updateSingle(const std::string &database,
 
     return checkStrExists<const std::string>("\"ok\"", result);
 }
+
+std::string Request::getDoc(const std::string &database,
+                            const std::string &docId) const
+{
+    auto reqUri = concat<std::string, StrArgs>("/", {baseUri, database, docId});
+
+    return getRequest<const std::string, long>(reqUri, credentials, timeout);
+}
+
+std::string Request::createIndex(const std::string &database,
+                                 const std::string &index) const
+{
+    auto reqUri = concat<std::string, StrArgs>("/", {baseUri, database, "_index"});
+
+    return postRequest<const std::string, long>(reqUri,
+                                                credentials,
+                                                index,
+                                                timeout);
+}
+
+std::string Request::changes(const std::string &database,
+                             const std::string &options) const
+{
+    auto reqUri = concat<std::string, StrArgs>("", {baseUri,
+                                                    "/",
+                                                    database,
+                                                    "/",
+                                                    "_changes",
+                                                    "?",
+                                                    options});
+
+    return getRequest<const std::string, long>(reqUri, credentials, timeout);
+}

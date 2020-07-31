@@ -128,13 +128,7 @@ void appCert(C curl, S &url)
         curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem");
 }
 
-/**
- * @brief Throws PHP error in the event of CURL failure(s)
- * 
- * @tparam T 
- * @param code 
- */
-template <typename T>
+/*template <typename T>
 void phpCurlError(T code)
 {
     switch (code)
@@ -173,7 +167,7 @@ void phpCurlError(T code)
         zend_throw_error(NULL, "An error occurred");
         break;
     }
-}
+}*/
 
 /**
  * @brief Makes CURL request
@@ -197,6 +191,7 @@ auto curlRequest(S &url, L method, S &credentials, S &data, L timeout) -> std::s
 
     if (curl)
     {
+        // store received request data in memory
         curl_easy_setopt(curl,
                          CURLOPT_WRITEFUNCTION,
                          static_cast<CURL_WRITEFUNCTION_PTR>([](char *contents, size_t size, size_t nmemb, std::string *data) -> size_t {
@@ -211,14 +206,20 @@ auto curlRequest(S &url, L method, S &credentials, S &data, L timeout) -> std::s
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
         curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
         appHeaders<CURL *>(curl);
+
+        // CouchDB Basic Auth credentials
         appAuth<CURL *, const std::string>(curl, credentials, url);
+        // request method/verb
         appMethod<CURL *, long, const std::string>(curl, method, data);
         appCert<CURL *, const std::string>(curl, url);
 
         resCode = curl_easy_perform(curl);
 
         if (resCode != CURLE_OK)
-            phpCurlError<CURLcode>(resCode);
+        {
+            // phpCurlError<CURLcode>(resCode);
+            zend_throw_error(NULL, curl_easy_strerror(resCode));
+        }
 
         curl_easy_cleanup(curl);
     }
