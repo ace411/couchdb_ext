@@ -127,6 +127,37 @@ public:
      * @return false 
      */
     bool isAvailable() const;
+
+    /**
+     * @brief Returns a document's contents
+     * 
+     * @param database 
+     * @param docId 
+     * @return std::string 
+     */
+    std::string getDoc(const std::string &database,
+                       const std::string &docId) const;
+
+    /**
+     * @brief Create a CouchDb index
+     * 
+     * @param database 
+     * @param index 
+     * @return true 
+     * @return false 
+     */
+    std::string createIndex(const std::string &database,
+                            const std::string &index) const;
+
+    /**
+     * @brief Convey CouchDB database changes
+     * 
+     * @param database 
+     * @param options 
+     * @return std::string 
+     */
+    std::string changes(const std::string &database,
+                        const std::string &options) const;
 };
 
 #endif // REQUEST_H

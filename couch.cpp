@@ -729,6 +729,203 @@ PHP_METHOD(Request, updateDocs)
 }
 /* }}} */
 
+/* {{{ proto string CouchDb::getDoc(string database, string docId)
+*/
+PHP_METHOD(Request, getDoc)
+{
+    zend_string *database, *docId;
+
+    zval *id = getThis();
+    request_object *intern;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+    Z_PARAM_STR(database)
+    Z_PARAM_STR(docId)
+    ZEND_PARSE_PARAMETERS_END();
+
+    if (ZSTR_LEN(database) == 0 || ZSTR_LEN(docId) == 0)
+    {
+        zend_throw_exception(request_exception_ce,
+                             "Argument(s) cannot be empty",
+                             0 TSRMLS_CC);
+        RETURN_NULL();
+    }
+
+    intern = Z_TSTOBJ_P(id);
+    if (intern != NULL)
+    {
+        std::string result = intern->request->getDoc(ZSTR_VAL(database),
+                                                     ZSTR_VAL(docId));
+        RETURN_STRING(result.c_str());
+    }
+
+    zend_string_release(database);
+    zend_string_release(docId);
+}
+/* }}} */
+
+/* {{{ proto bool createIndex(string database, array index, bool partial = false) 
+*/
+PHP_METHOD(Request, createIndex)
+{
+    zend_string *database, *idxKey, *partialKey;
+    zval *index, idxVal;
+    // initialize partial index flag
+    zend_bool partial = 0;
+
+    smart_str jsonData = {0};
+
+    zval *id = getThis();
+    request_object *intern;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_STR(database)
+    Z_PARAM_ARRAY(index)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_BOOL(partial)
+    ZEND_PARSE_PARAMETERS_END();
+
+    // initialize the index key
+    idxKey = zend_string_init("index", sizeof("index") - 1, 1);
+
+    // throw an exception if any of the args are empty
+    if (!zend_hash_num_elements(Z_ARRVAL_P(index)) ||
+        ZSTR_LEN(database) == 0)
+    {
+        zend_string_release(database);
+        zend_string_release(idxKey);
+        zend_throw_exception(request_exception_ce,
+                             "Argument(s) cannot be empty",
+                             0 TSRMLS_CC);
+        RETURN_NULL();
+    }
+
+    // throw exception if index does not exist
+    if (!zend_hash_exists(Z_ARRVAL_P(index), idxKey))
+    {
+        zend_string_release(database);
+        zend_string_release(idxKey);
+        zend_throw_exception(request_exception_ce,
+                             "'index' key is missing",
+                             0 TSRMLS_CC);
+        RETURN_NULL();
+    }
+
+    ZVAL_COPY(&idxVal, zend_hash_find(Z_ARRVAL_P(index), idxKey));
+
+    // throw exception if the index is not an array
+    if (Z_TYPE_P(&idxVal) != IS_ARRAY)
+    {
+        zend_string_release(database);
+        zend_string_release(idxKey);
+        zend_throw_exception(request_exception_ce,
+                             "'index' must be an array",
+                             0 TSRMLS_CC);
+        RETURN_NULL();
+    }
+
+    intern = Z_TSTOBJ_P(id);
+    if (intern != NULL)
+    {
+        if (partial == 1)
+        {
+            partialKey = zend_string_init("partial_filter_selector",
+                                          sizeof("partial_filter_selector") - 1,
+                                          1);
+            if (!zend_hash_exists(Z_ARRVAL_P(&idxVal), partialKey))
+            {
+                zend_string_release(database);
+                zend_string_release(idxKey);
+                zend_string_release(partialKey);
+                zend_throw_exception(request_exception_ce,
+                                     "'partial_filter_selector' key is missing",
+                                     0 TSRMLS_CC);
+                RETURN_NULL();
+            }
+        }
+
+        php_json_encode(&jsonData, index, 0);
+        smart_str_0(&jsonData);
+
+        std::string result = intern->request->createIndex(ZSTR_VAL(database),
+                                                          ZSTR_VAL(jsonData.s));
+        RETURN_STRING(result.c_str());
+        smart_str_free(&jsonData);
+    }
+
+    zend_string_release(idxKey);
+    zend_string_release(database);
+}
+/* }}} */
+
+/* {{{ proto string changes(string database, [array options = []])
+*/
+PHP_METHOD(Request, changes)
+{
+    zend_string *database;
+    zval *options;
+
+    smart_str queryStr = {0};
+    char *argSep = NULL;
+
+    array_init(options);
+
+    zval *id = getThis();
+    request_object *intern;
+
+    ZEND_PARSE_PARAMETERS_START(1, 2)
+    Z_PARAM_STR(database)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    if (ZSTR_LEN(database) == 0)
+    {
+        zend_string_release(database);
+        zend_throw_exception(request_exception_ce,
+                             "Argument(s) cannot be empty",
+                             0 TSRMLS_CC);
+        RETURN_NULL();
+    }
+
+    if (zend_hash_num_elements(Z_ARRVAL_P(options)) == 0)
+    {
+        add_assoc_string(options, "conflicts", "false");
+        add_assoc_string(options, "descending", "false");
+    }
+
+    intern = Z_TSTOBJ_P(id);
+    if (intern != NULL)
+    {
+        if (php_url_encode_hash_ex(Z_ARRVAL_P(options),
+                                   &queryStr,
+                                   NULL,
+                                   0,
+                                   NULL,
+                                   0,
+                                   NULL,
+                                   0,
+                                   (Z_TYPE_P(options) == IS_OBJECT ? options : NULL),
+                                   argSep,
+                                   1) == FAILURE)
+        {
+            zend_throw_exception(request_exception_ce,
+                                 "Cannot encode parameters",
+                                 0 TSRMLS_CC);
+            RETURN_NULL();
+        }
+        smart_str_0(&queryStr);
+
+        std::string result = intern->request->changes(ZSTR_VAL(database),
+                                                      ZSTR_VAL(queryStr.s));
+        RETURN_STRING(result.c_str());
+        smart_str_free(&queryStr);
+
+        zend_string_release(database);
+    }
+}
+/* }}} */
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_constructor, 0, 0, 1)
 ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO();
@@ -740,6 +937,11 @@ ZEND_END_ARG_INFO();
 ZEND_BEGIN_ARG_INFO_EX(arginfo_alldocs, 0, 0, 2)
 ZEND_ARG_INFO(0, database)
 ZEND_ARG_ARRAY_INFO(0, options, 0)
+ZEND_END_ARG_INFO();
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getdoc, 0, 0, 2)
+ZEND_ARG_INFO(0, database)
+ZEND_ARG_INFO(0, docId)
 ZEND_END_ARG_INFO();
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_insertdocs, 0, 0, 2)
@@ -787,6 +989,12 @@ ZEND_ARG_INFO(0, docRev)
 ZEND_ARG_ARRAY_INFO(0, document, 0)
 ZEND_END_ARG_INFO();
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_createindex, 0, 0, 3)
+ZEND_ARG_INFO(0, database)
+ZEND_ARG_ARRAY_INFO(0, index, 0)
+ZEND_ARG_INFO(0, isPartial)
+ZEND_END_ARG_INFO();
+
 static const zend_function_entry request_methods[] = {
     PHP_ME(Request, __construct, arginfo_constructor, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
         PHP_ME(Request, uuids, arginfo_uuids, ZEND_ACC_PUBLIC)
@@ -803,7 +1011,10 @@ static const zend_function_entry request_methods[] = {
                                                     PHP_ME(Request, deleteDocs, arginfo_deletedocs, ZEND_ACC_PUBLIC)
                                                         PHP_ME(Request, updateDoc, arginfo_updatesingle, ZEND_ACC_PUBLIC)
                                                             PHP_ME(Request, updateDocs, arginfo_deletedocs, ZEND_ACC_PUBLIC)
-                                                                PHP_FE_END};
+                                                                PHP_ME(Request, getDoc, arginfo_getdoc, ZEND_ACC_PUBLIC)
+                                                                    PHP_ME(Request, createIndex, arginfo_createindex, ZEND_ACC_PUBLIC)
+                                                                        PHP_ME(Request, changes, arginfo_alldocs, ZEND_ACC_PUBLIC)
+                                                                            PHP_FE_END};
 
 zend_object *request_object_new(zend_class_entry *ce TSRMLS_DC)
 {
