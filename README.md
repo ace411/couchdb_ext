@@ -36,6 +36,10 @@ If you intend to run the tests in the tests directory, run the following command
 make test
 ```
 
+## Docker
+
+There exists a Docker image for this extension. You can find it in the [docker_couchdb_ext](https://github.com/peter279k/docker_couchdb_ext) repository.
+
 ## Rationale
 
 I published the [fauxton API client](https://github.com/php-api-clients/fauxton), an asynchronous - non-blocking IO solution which is relatively more performant than the [synchronous version](https://github.com/ace411/fauxton-client) I wrote earlier.
