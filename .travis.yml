@@ -4,7 +4,9 @@ php:
   - 7.3
   - 7.4
 
-sudo: enabled
+os: linux
+
+dist: bionic
 
 before_script:
   - sudo apt-get install libcurl4-openssl-dev
@@ -15,5 +17,5 @@ services:
 
 script:
   - phpize
-  - ./configure --enable-couchdb_ext CFLAGS="-lcurl"
+  - ./configure --enable-couchdb_ext
   - make && make test
