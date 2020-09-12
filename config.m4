@@ -30,5 +30,5 @@ if test "$PHP_COUCHDB_EXT" != "no"; then
     PHP_SUBST(COUCHDB_EXT_SHARED_LIBADD)
     PHP_ADD_LIBRARY(stdc++, 1, COUCHDB_EXT_SHARED_LIBADD)
     PHP_ADD_EXTENSION_DEP(couchdb_ext, json)
-    PHP_NEW_EXTENSION(couchdb_ext, couch.cpp request.cpp, $ext_shared)
+    PHP_NEW_EXTENSION(couchdb_ext, php_couch.cpp, $ext_shared)
 fi
