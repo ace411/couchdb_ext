@@ -2,7 +2,7 @@
 queryView throws exception when arguments are empty
 --FILE--
 <?php
-require __DIR__ . '/../config.php';
+require __DIR__ . '/../../couch.php';
 
 echo gettype(
   $couch->updateDoc(

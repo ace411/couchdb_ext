@@ -2,7 +2,7 @@
 allDocs prints a list of all documents in a database
 --FILE--
 <?php
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../couch.php';
 
 $docs = $couch->allDocs(DATABASE, [
   'include_docs'  => 'true',

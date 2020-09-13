@@ -2,7 +2,7 @@
 changes logs CouchDB database changes
 --FILE--
 <?php
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../couch.php';
 
 print_r([
   'fst' => gettype($couch->changes(DATABASE)),

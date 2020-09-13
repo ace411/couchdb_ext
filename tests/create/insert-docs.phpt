@@ -2,7 +2,7 @@
 insertDocs creates database documents
 --FILE--
 <?php
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../couch.php';
 
 echo gettype(
   $couch->insertDocs(DATABASE, [

@@ -52,430 +52,108 @@ The snippet below is code that can be quite useful in not only configuring Couch
 
 ```php
 if (!extension_loaded("couchdb_ext")) {
-    echo "Extension not loaded.";
+  exit();
 }
 
 $couch = new CouchDb([
-    'user'      => 'your-username',
-    'pass'      => 'your-password',
-    'host'      => 'your-host (localhost or cloudant)',
-    'port'      => 5984,
-    'timeout'   => 60,
+  'user'      => 'your-username',
+  'pass'      => 'your-password',
+  'host'      => 'your-host (localhost or cloudant)',
+  'port'      => 5984,
+  'http'      => true,
+  'json'      => true,
+  'timeout'   => 60,
 ]);
 
 if (!$couch->isAvailable()) {
-    echo "Could not find a running instance of CouchDB";
+  echo "Could not find a running instance of CouchDB";
 }
 
 echo $couch->uuids(5);
 ```
 
+> Please check out the [examples](https://github.com/ace411/couchdb_ext/tree/master/examples) directory for more sample material
+
 ## API reference
 
-### \_\_construct
-
-```
-__construct(array $options)
-```
-
-**Argument(s):**
-
-- **_options (array)_** - Configuration options array
-  - **_host (string)_** - CouchDB host
-  - **_user (string)_** - CouchDB username
-  - **_pass (string)_** - CouchDB password
-  - **_port (integer)_** - CouchDB port (defaults to 5984)
-  - **_timeout (integer)_** - Request timeout (defaults to 60)
-
-Creates an instance of the CouchDb class.
-
 ```php
-const CONFIG = [
-    'user'      => 'your-username',
-    'pass'      => 'your-password',
-    'host'      => 'your-host (localhost or cloudant)',
-    'port'      => 5984,
-    'timeout'   => 60,
-];
+class CouchDb {
 
-$couchDb = new CouchDb(CONFIG);
-```
-
-### isAvailable
-
-```
-isAvailable(): bool
-```
-
-**Argument(s):**
-
-> _None_
-
-Checks if the database at the constructor-specified location is present.
-
-```php
-
-if ($couch->isAvailable()) {
-    echo $couch->allDocs('your-database');
+  /* Methods */
+  public __construct( array $options );
+  public isAvailable() : bool;
+  public createDb( string $database ) : bool;
+  public deleteDb( string $database ) : bool;
+  public dbExists( string $database ) : bool;
+  public dbInfo( string $database ) : string|array;
+  public uuids( int $count ) : string|array;
+  public changes( string $database [, array $options ] ) : string|array;
+  public allDbs() : string|array;
+  public allDocs( string $database [, array $query ] ) : string|array;
+  public insertDocs( string $database [, array $docs ] ) : bool;
+  public updateDocs( string $database [, array $docs ] ) : bool;
+  public deleteDocs( string $database [, array $docs ] ) : bool;
+  public search( string $database [, array $query ] ) : string|array;
+  public explain( string $database [, array $query ] ) : string|array;
+  public createIndex( string $database [, array $index ] ) : bool;
+  public getDoc( string $database [, string $docId ] ) : string|array;
+  public insertDoc( string $database [, array $contents [, bool $batch = false ]] ) : bool;
+  public updateDoc( string $database [, string $docId [, string $rev [, array $contents ]]] ) : bool;
+  public deleteDoc( string $database [, string $docId [, string $rev ]] ) : bool;
+  public createDdoc( string $database [, string $ddoc [, array $contents ]] ) : bool;
+  public queryView( string $database [, string $ddoc [, string $view [, array $query ]]] ) : string|array;
+  public replicate( array $options ) : string|array;
 }
 ```
 
-### uuids
+`CouchDb::__construct` - Create new CouchDb instance
 
-```
-uuids(int $count): string
-```
+`CouchDb::isAvailable` - Checks if a CouchDB instance is available
 
-**Argument(s):**
+`CouchDb::createDb` - Creates a new database
 
-- **_count (integer)_** - The number of uuids to generate
+`CouchDb::deleteDb` - Deletes a database
 
-Generates a specified number of Universally Unique Identifiers.
+`CouchDb::dbExists` - Checks if a database exists
 
-```php
+`CouchDb::dbInfo` - Outputs database metadata
 
-echo $couch->uuids(4); //returns JSON string
-```
+`CouchDb::uuids` - Generates a specified number of UUIDS (Universally Unique Identifiers)
 
-### createDb
+`CouchDb::changes` - Returns a list of changes made to documents in a database
 
-```
-createDb(string $database): bool
-```
+`CouchDb::allDbs` - Ouputs a list of all databases available on disk
 
-**Argument(s):**
+`CouchDb::allDocs` - Returns all documents in a specified database
 
-- **_database (string)_** - The name of the database
+`CouchDb::insertDocs` - Inserts documents into a database
 
-Creates a database.
+`CouchDb::updateDocs` - Updates documents in a database
 
-```php
-const DB_NAME = 'your-database';
+`CouchDb::deleteDocs` - Deletes documents in a database
 
-if ($couch->createDb(DB_NAME)) {
-    $couch->insertDocs(DB_NAME, [
-        'docs' => [
-            [
-                '_id'       => 'FishStew',
-                'servings'  => 4,
-                'subtitle'  => 'Delicious with freshly baked bread'
-            ],
-            [
-                '_id'       => 'LambStew',
-                'servings'  => 6,
-                'subtitle'  => 'Serve with a whole meal scone topping'
-            ]
-        ]
-    ]);
-}
-```
+`CouchDb::search` - Performs Mango-query powered search
 
-### allDbs
+`CouchDb::explain` - Outputs query index-specific metadata
 
-```
-allDbs(): string
-```
+`CouchDb::createIndex` - Creates a search index
 
-**Argument(s):**
+`CouchDb::getDoc` - Returns a single document
 
-> None
+`CouchDb::insertDoc` - Inserts a single document into a database
 
-Outputs a list of all the databases available on disk.
+`CouchDb::updateDoc` - Updates a single document in a database
 
-```php
-$dbs = json_decode($couch->allDbs(), true);
+`CouchDb::deleteDoc` - Deletes a single document from a database
 
-if (!in_array('your-database', $dbs)) {
-    echo 'My database does not exist';
-}
-```
+`CouchDb::createDdoc` - Creates a new design document
 
-### getDoc
+`CouchDb::queryView` - Queries a view in a specified database
 
-```
-getDoc(string $database, string $docId): string
-```
+`CouchDb::replicate` - Configures a replication operation
 
-**Argument(s):**
+## Contributing
 
-- **_database (string)_** - CouchDB database
-- **_docId (string)_** - Unique document identifier
+Consider buying me a coffee if you appreciate the offerings of the project and/or would like to provide more impetus for me to continue working on it.
 
-Outputs the contents of a specified document.
-
-```php
-echo $couch->getDoc('your-database', 'doc-id');
-```
-
-### allDocs
-
-```
-allDocs(string $database, array $options): string
-```
-
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-- **_options (array)_** - An array of [CouchDB-specific query options](http://docs.couchdb.org/en/stable/api/database/bulk-api.html#db-all-docs)
-
-Outputs a list of all documents in a specified database.
-
-```php
-echo $couch->allDocs('your-database', [
-    'include_docs' => 'true',
-    'descending' => 'true'
-]);
-```
-
-### insertDocs
-
-```
-insertDocs(string $database, array $docs): bool
-```
-
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-- **_docs (array)_** - The data to insert in the database
-
-Inserts data into a CouchDB database.
-
-```php
-$couch->insertDocs('your-database', [
-    'docs' => [
-        [
-            '_id'       => 'FishStew',
-            'servings'  => 4,
-            'subtitle'  => 'Delicious with freshly baked bread'
-        ],
-        [
-            '_id'       => 'LambStew',
-            'servings'  => 6,
-            'subtitle'  => 'Serve with a whole meal scone topping'
-        ]
-    ]
-]);
-```
-
-### search
-
-```
-search(string $database, array $query): string
-```
-
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-- **_query (array)_** - The search query to execute
-
-Performs a Mango-query-powered search.
-
-```php
-$github = $couch->search('your-database', [
-    'selector'              => [
-        'name' => ['$regex' => '(?i)ich']
-    ],
-    'fields'                => ['_id', 'name', 'github'],
-    'execution_stats'       => 'true'
-]);
-
-var_dump(json_decode($github)); //returns a user object with specified fields
-```
-
-### createIndex
-
-```
-createIndex(string $database, array $options, bool $partial = false): string
-```
-
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-- **_options (array)_** - Index creation options (see CouchDB documentation)
-- **_partial (boolean)_** - Partial flag that dictates index type (set to `true` if you intend to create a partial index)
-
-Creates a CouchDB index.
-
-```php
-echo $couch->createIndex('your-database', [
-    'index' => [
-      'fields' => ['servings', '_id', 'subtitle']
-    ],
-    'ddoc'  => 'type-servings',
-    'type'  => 'json'
-]);
-```
-
-> Setting the `$partial` flag to `true` means that the `partial_filter_selector` should feature in your options list.
-
-### createDdoc
-
-```
-createDdoc(string $database, string $ddoc, array $options): bool
-```
-
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-- **_ddoc (string)_** - The name of the design document
-- **_options (array)_** - ddoc options list (See documentation)
-
-Creates a design document.
-
-```php
-$couch->createDdoc('your-database', 'profileDoc', [
-    'language'  => 'javascript',
-    'views'     => [
-        'github-view' => [
-            'map' => 'function (doc) { emit(doc._id, doc.github) }'
-        ]
-    ]
-]);
-```
-
-### queryView
-
-```
-queryView(string $database, string $ddoc, string $view, array $opts): string
-```
-
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-- **_ddoc (string)_** - The name of the design document
-- **_view (string)_** - The view to query
-- **_options (array)_** - View query options (See CouchDB documentation)
-
-Queries a view in a specified database.
-
-```php
-['key' => $key, 'value' => $val] = json_decode($couch->queryView('your-database', 'profileDoc', 'github-view', [
-    'descending'    => 'true',
-    'conflicts'     => 'false',
-    'update'        => 'true'
-]), true);
-```
-
-### deleteDoc
-
-```
-deleteDoc(string $database, string $docId, string $docRev): bool
-```
-
-**Argument(s):**
-
-- **_database (string)_** - CouchDB database
-- **_docId (string)_** - Unique document identifier
-- **_docRev (string)_** - Unique document revision
-
-Deletes a specified document from a CouchDB database.
-
-```php
-
-$couch->deleteDoc('your-database', 'doc-id', 'doc-rev');
-```
-
-### deleteDocs
-
-```
-deleteDocs(string $database, array $docs): bool
-```
-
-**Argument(s):**
-
-- **_database (string)_** - CouchDB database
-- **_docs (array)_** - A list of documents
-
-> `_id` and `_rev` keys are mandatory for each `docs` array entry
-
-Deletes documents from a CouchDB database.
-
-```php
-$couch->deleteDocs('your-database', [
-    [
-        '_id'   => 'Pilau',
-        '_rev'  => '1-599acfa0c7b36889599bde56276e444c'
-    ],
-    [
-        '_id'   => 'Katogo',
-        '_rev'  => '1-41669894c7d25a634f5de4fef75fb982'
-    ]
-]);
-```
-
-### updateDoc
-
-```
-updateDoc(string $database, string $docId, string $docRev, array $doc): bool
-```
-
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-- **_docId (string)_** - Unique document identifier
-- **_docRev (string)_** - Unique document revision
-- **_doc (array)_** - The data containing the update contents
-
-Updates a document in a CouchDB database.
-
-```php
-$couch->updateDoc('your-database', 'Pilau', '1-599acfa0c7b36889599bde56276e444c', [
-    'servings'  => 4,
-    'subtitle'  => 'A delicious amalgam of rice and spices'
-]);
-```
-
-### updateDocs
-
-```
-updateDocs(string $database, array $docs): bool
-```
-
-**Argument(s):**
-
-- **_database (string)_** - CouchDB database
-- **_docs (array)_** - A list of documents to update
-
-> `_id` and `_rev` keys are mandatory for each `docs` array entry
-
-Updates multiple documents in a CouchDB database.
-
-```php
-$couch->updateDocs('your-database', [
-    'docs' => [
-        [
-            '_id'       => 'fishStew',
-            '_rev'      => '1-41669894c7d25a634f5de4fef75fb982'
-            'servings'  => 2,
-            'subtitle'  => 'Delicious with freshly baked bread'
-        ],
-        [
-            '_id'       => 'LambStew',
-            '_rev'      => '1-599acfa0c7b36889599bde56276e444c',
-            'servings'  => 3,
-            'subtitle'  => 'Serve with a whole meal scone topping'
-        ]
-    ]
-]);
-```
-
-### changes
-
-```
-changes(string $database, array $options = []): string
-```
-
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-- **_options (array)_** - An array of CouchDB-specific change tracking options
-
-Conveys changes made to a database.
-
-```php
-echo $couch->changes('your-database', [
-    'conflicts'     => 'true',
-    'include_docs'  => 'true',
-    'descending'    => 'true'
-])
-```
+<a href="https://www.buymeacoffee.com/agiroLoki" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/lato-white.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;" ></a>

@@ -2,12 +2,12 @@
 couchdb_ext works
 --SKIPIF--
 <?php 
-if (!extension_loaded('couchdb_ext')) 
+if (!extension_loaded('couchdb')) 
     echo 'skip';
 ?>
 --FILE--
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../couch.php';
 
 echo $couch instanceof CouchDb ? 'true' : 'false';
 ?>

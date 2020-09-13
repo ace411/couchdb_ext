@@ -1,13 +1,14 @@
 --TEST--
-search method performs discretionary search of CouchDB database
+explain outputs query index-specific metadata
 --FILE--
 <?php
 require_once __DIR__ . '/../../couch.php';
 
-$data = $couch->search(DATABASE, [
+$data = $couch->explain(DATABASE, [
   'selector'  => [
     '_id' => ['$regex' => '(?i)git']
   ],
+  'fields'    => ['_id', 'servings', 'subtitle'],
   'skip'      => 0
 ]);
 

@@ -2,7 +2,7 @@
 createIndex creates CouchDB index
 --FILE--
 <?php
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../couch.php';
 
 echo gettype(
   $couch->createIndex(DATABASE, [
@@ -15,4 +15,4 @@ echo gettype(
 );
 ?>
 --EXPECT--
-string
+boolean

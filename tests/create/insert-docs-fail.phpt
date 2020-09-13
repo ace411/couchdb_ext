@@ -2,7 +2,7 @@
 insertDocs throws an exception if parameters are empty
 --FILE--
 <?php
-require __DIR__ . '/../config.php';
+require __DIR__ . '/../../couch.php';
 
 try {
   $couch->insertDocs('', []);

@@ -2,7 +2,7 @@
 deleteDb throws exception when invalid arguments are detected
 --FILE--
 <?php
-require __DIR__ . '/../config.php';
+require __DIR__ . '/../../couch.php';
 
 try {
   $couch->deleteDb('');
@@ -11,4 +11,4 @@ try {
 }
 ?>
 --EXPECT--
-Database name cannot be empty
+Argument(s) cannot be empty

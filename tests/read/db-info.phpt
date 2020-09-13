@@ -1,12 +1,10 @@
 --TEST--
-uuids outputs a list of uuids
+dbInfo outputs database metadata
 --FILE--
 <?php
 require_once __DIR__ . '/../../couch.php';
 
-$uuids = $couch->uuids(2);
-
-echo gettype($uuids);
+echo gettype($couch->dbInfo(DATABASE));
 ?>
 --EXPECT--
 string

@@ -2,16 +2,12 @@
 createIndex throws exception when partial_filter_selector key is absent
 --FILE--
 <?php
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../couch.php';
 
-try {
-  echo $couch->createIndex(DATABASE, [
-    'index' => ['foo'],
-    'type'  => 'json'
-  ], true);
-} catch (CouchDbException $exp) {
-  echo $exp->getMessage();
-}
+echo gettype($couch->createIndex(DATABASE, [
+  'index' => ['foo'],
+  'type'  => 'json'
+]));
 ?>
 --EXPECT--
-'partial_filter_selector' key is missing
+boolean

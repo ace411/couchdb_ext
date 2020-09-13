@@ -2,7 +2,7 @@
 createDb throws exception when database name is empty string
 --FILE--
 <?php
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../couch.php';
 
 try {
   $couch->createDb('');
@@ -11,4 +11,4 @@ try {
 }
 ?>
 --EXPECT--
-Database name cannot be empty
+Argument(s) cannot be empty

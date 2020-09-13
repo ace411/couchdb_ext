@@ -2,7 +2,7 @@
 deleteDoc throws an exception when empty parameters are detected
 --FILE--
 <?php
-require __DIR__ . '/../config.php';
+require __DIR__ . '/../../couch.php';
 
 try {
   $couch->deleteDoc('', '', '');

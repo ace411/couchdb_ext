@@ -2,7 +2,7 @@
 search throws exception when selector key is absent
 --FILE--
 <?php
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../couch.php';
 
 try {
   $couch->search(DATABASE, [
@@ -14,4 +14,4 @@ try {
 }
 ?>
 --EXPECT--
-'selector' key is missing
+Missing required key: selector

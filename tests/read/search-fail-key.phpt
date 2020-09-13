@@ -2,7 +2,7 @@
 search throws an exception when parameters are empty
 --FILE--
 <?php
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../couch.php';
 
 try {
   $couch->search('', []);
