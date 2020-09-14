@@ -6,14 +6,12 @@ php:
 
 os: linux
 
-dist: bionic
+services:
+  - couchdb
 
 before_script:
   - sudo apt-get install libcurl4-openssl-dev
-  - curl -X PUT http://localhost:5984/testdb
-
-services:
-  - couchdb
+  - curl -X PUT localhost:5984/testdb
 
 script:
   - phpize
