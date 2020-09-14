@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package packagerversion="1.10.1" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
+ <name>couchdb</name>
+ <channel>pecl.php.net</channel>
+ <summary>PHP CouchDb extension</summary>
+ <description>A simple CouchDB wrapper for PHP.</description>
+ <lead>
+  <name>Lochemem Bruno Michael</name>
+  <user>agiroLoki95</user>
+  <email>lochbm@yahoo.com</email>
+  <active>yes</active>
+ </lead>
+ <date>2020-09-14</date>
+ <version>
+  <release>0.1.0</release>
+  <api>0.1.0</api>
+ </version>
+ <stability>
+  <release>unstable</release>
+  <api>unstable</api>
+ </stability>
+ <license uri="http://www.php.net/license">PHP</license>
+ <notes>
+- First release
+ </notes>
+ <contents>
+  <dir name="/">
+   <file name="LICENSE" role="doc" />
+   <file name="README.md" role="doc" />
+   <file name="config.m4" role="src" />
+   <file name="php_couch.cpp" role="src" />
+   <file name="php_couchdb.h" role="src" />
+   <file name="couch.h" role="src" />
+   <file name="couch.cpp" role="src" />
+   <file name="couch.php" role="src" />
+   <file name="cacert.pem" role="src" />
+   <file name="tests/check.phpt" role="test" />
+   <file name="tests/array-return.phpt" role="test" />
+   <file name="tests/is-available.phpt" role="test" />
+   <file name="tests/constructor-error.phpt" role="test" />
+   <file name="tests/create/create-db-fail.phpt" role="test" />
+   <file name="tests/create/create-db.phpt" role="test" />
+   <file name="tests/create/create-ddoc-fail.phpt" role="test" />
+   <file name="tests/create/create-ddoc.phpt" role="test" />
+   <file name="tests/create/create-index-arg-fail.phpt" role="test" />
+   <file name="tests/create/create-index.phpt" role="test" />
+   <file name="tests/create/create-partial-index-fail.phpt" role="test" />
+   <file name="tests/create/create-partial-index.phpt" role="test" />
+   <file name="tests/create/insert-docs-fail.phpt" role="test" />
+   <file name="tests/create/insert-docs.phpt" role="test" />
+   <file name="tests/create/uuids.phpt" role="test" />
+   <file name="tests/delete/delete-db-fail.phpt" role="test" />
+   <file name="tests/delete/delete-doc-fail.phpt" role="test" />
+   <file name="tests/delete/delete-doc.phpt" role="test" />
+   <file name="tests/delete/delete-docs.phpt" role="test" />
+   <file name="tests/read/allDbs.phpt" role="test" />
+   <file name="tests/read/changes.phpt" role="test" />
+   <file name="tests/read/db-exists.phpt" role="test" />
+   <file name="tests/read/db-info.phpt" role="test" />
+   <file name="tests/read/explain.phpt" role="test" />
+   <file name="tests/read/fetch-docs.phpt" role="test" />
+   <file name="tests/read/get-doc.phpt" role="test" />
+   <file name="tests/read/query-view-fail.phpt" role="test" />
+   <file name="tests/read/query-view.phpt" role="test" />
+   <file name="tests/read/search-fail-key.phpt" role="test" />
+   <file name="tests/read/search-fail-selector.phpt" role="test" />
+   <file name="tests/read/search.phpt" role="test" />
+   <file name="tests/update/update-doc-fail.phpt" role="test" />
+   <file name="tests/update/update-doc.phpt" role="test" />
+   <file name="tests/update/update-docs-fail.phpt" role="test" />
+   <file name="tests/update/update-docs.phpt" role="test" />
+  </dir>
+ </contents>
+ <dependencies>
+  <required>
+   <php>
+    <min>7.3.0</min>
+    <max>7.4.99</max>
+   </php>
+   <pearinstaller>
+    <min>1.4.1</min>
+   </pearinstaller>
+  </required>
+ </dependencies>
+ <providesextension>couchdb</providesextension>
+ <extsrcrelease />
+</package>
