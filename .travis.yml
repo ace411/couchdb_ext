@@ -6,8 +6,6 @@ php:
 
 os: linux
 
-dist: bionic
-
 services:
   - couchdb
 
