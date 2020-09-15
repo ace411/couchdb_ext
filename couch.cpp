@@ -592,8 +592,6 @@ static void query(INTERNAL_FUNCTION_PARAMETERS, long type)
     }
     COUCH_ACTION_END();
   }
-
-  zend_string_release(database);
 }
 
 /**
