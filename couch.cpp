@@ -555,14 +555,11 @@ static void query(INTERNAL_FUNCTION_PARAMETERS, long type)
   php_json_encode(&jsonData, query, 0);
   smart_str_0(&jsonData);
 
+  i_zval_ptr_dtor(query);
+
   intern = Z_COUCHOBJ_P(obj);
   if (intern != NULL)
   {
-    // free JSON smart string
-#define FREE_JSON(json)  \
-  smart_str_free(&json); \
-  efree(json.s);
-
     COUCH_ACTION_START()
     {
       std::string retval;
@@ -573,7 +570,6 @@ static void query(INTERNAL_FUNCTION_PARAMETERS, long type)
       case DB_QUERY_SEARCH:
         retval = intern->couch->search(ZSTR_VAL(database),
                                        ZSTR_VAL(jsonData.s));
-        FREE_JSON(jsonData);
         COUCHDB_RETURN(retval, intern->json);
         break;
 
@@ -581,20 +577,23 @@ static void query(INTERNAL_FUNCTION_PARAMETERS, long type)
         retval = intern->couch->search(ZSTR_VAL(database),
                                        ZSTR_VAL(jsonData.s),
                                        true);
-        FREE_JSON(jsonData);
         COUCHDB_RETURN(retval, intern->json);
         break;
 
       case DB_QUERY_CREATE_INDEX:
         res = intern->couch->createIndex(ZSTR_VAL(database),
                                          ZSTR_VAL(jsonData.s));
-        FREE_JSON(jsonData);
         RETURN_BOOL(res);
         break;
       }
+
+      smart_str_free(&jsonData);
+      efree(jsonData.s);
     }
     COUCH_ACTION_END();
   }
+
+  zend_string_release(database);
 }
 
 /**
