@@ -354,7 +354,11 @@ namespace couch
     {
       auto uri = concat("?", {(baseUri + "/_uuids"),
                               ("count=" + std::to_string(count))});
-      return get(uri, timeout);
+      auto result = get(uri, timeout);
+      if (strCheck("\"error\"", result))
+        throw std::runtime_error(errStr(result).c_str());
+
+      return result;
     }
 
     /**
@@ -378,9 +382,12 @@ namespace couch
      */
     std::string getDoc(std::string database, std::string docid)
     {
-      auto uri = concat("/", {baseUri, database, docid});
+      auto result = get(concat("/", {baseUri, database, docid}), timeout);
+      auto missing = strCheck("\"missing\"", result);
+      if (strCheck("\"error\"", result) && !missing)
+        throw std::runtime_error(errStr(result).c_str());
 
-      return get(uri, timeout);
+      return missing ? "{}" : result;
     }
 
     /**
