@@ -587,13 +587,11 @@ static void query(INTERNAL_FUNCTION_PARAMETERS, long type)
         break;
       }
 
-      smart_str_free(&jsonData);
-      efree(jsonData.s);
+      // smart_str_free(&jsonData);
+      // efree(jsonData.s);
     }
     COUCH_ACTION_END();
   }
-
-  zend_string_release(database);
 }
 
 /**
