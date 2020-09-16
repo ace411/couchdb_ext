@@ -67,6 +67,8 @@
    <file name="tests/read/search-fail-selector.phpt" role="test" />
    <file name="tests/read/search.phpt" role="test" />
    <file name="tests/read/get-doc-fail-nexists.phpt" role="test" />
+   <file name="tests/read/explain-fail-key.phpt" role="test" />
+   <file name="tests/read/explain-fail-selector.phpt" role="test" />
    <file name="tests/update/update-doc-fail.phpt" role="test" />
    <file name="tests/update/update-doc.phpt" role="test" />
    <file name="tests/update/update-docs-fail.phpt" role="test" />
