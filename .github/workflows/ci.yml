@@ -19,6 +19,9 @@ jobs:
         uses: iamssen/couchdb-github-action@master
         with:
           couchdb-version: ${{ matrix.couchdb }}
+      - name: Install libcurl
+        run: |
+          sudo apt-get install libcurl4-openssl-dev
       - name: Install async.h
         run: |
           chmod a+x async.sh && ./async.sh
