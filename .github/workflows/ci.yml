@@ -19,12 +19,6 @@ jobs:
         uses: iamssen/couchdb-github-action@master
         with:
           couchdb-version: ${{ matrix.couchdb }}
-      - name: Ascertain CouchDB availability
-        run: |
-          curl -i -X GET \ 
-          -H 'content-type: application/json' \
-          -H 'accept: application/json' \
-          http://localhost:5984/_up
       - name: Install async.h
         run: |
           chmod a+x async.sh && ./async.sh
