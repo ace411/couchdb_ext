@@ -1,5 +1,6 @@
 <?php
 
+<<<<<<< HEAD
 /*
   +----------------------------------------------------------------------+
 	 | Copyright (c) The PHP Group                                          |
@@ -38,3 +39,22 @@ function configure(array $config = []): CouchDb
 		),
   );
 }
+=======
+declare(strict_types=1);
+
+/**
+ * @var array CONFIG
+ */
+const CONFIG    = [
+  'user' => '',
+  'pass' => '',
+  'host' => 'localhost'
+];
+
+/**
+ * @var string DATABASE
+ */
+const DATABASE  = 'testdb';
+
+$couch = new CouchDb(CONFIG);
+>>>>>>> master

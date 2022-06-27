@@ -762,4 +762,4 @@ Endeavor to create an issue on GitHub when the need arises or send an email to l
 
 Consider buying me a coffee if you appreciate the offerings of the project and/or would like to provide more impetus for me to continue working on it.
 
-<a href="https://www.buymeacoffee.com/agiroLoki" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/lato-white.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;" ></a>
+# <a href="https://www.buymeacoffee.com/agiroLoki" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/lato-white.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;" ></a>
