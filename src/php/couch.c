@@ -39,7 +39,8 @@ void php_couchdb_connection_free_object(zend_object *object)
 }
 void php_couchdb_connection_destroy_object(zend_object *object)
 {
-  php_couchdb_connection *intern = (php_couchdb_connection *)((char *)object - XtOffsetOf(php_couchdb_connection, std));
+  php_couchdb_connection *intern = (php_couchdb_connection *)((char *)object -
+                                                              XtOffsetOf(php_couchdb_connection, std));
   zend_object_std_dtor(object);
 }
 #if ZEND_MODULE_API_NO < ZEND_API_PHP80
@@ -200,12 +201,24 @@ void couchdb_connect(INTERNAL_FUNCTION_PARAMETERS)
   }
   else
   {
-    tmp = connection_default(HT_KEY_EXISTS(db_config, db_user) ? HT_GET_STRVAL(db_config, db_user) : "",
-                             HT_KEY_EXISTS(db_config, db_pass) ? HT_GET_STRVAL(db_config, db_pass) : "",
-                             HT_KEY_EXISTS(db_config, db_host) ? HT_GET_STRVAL(db_config, db_host) : COUCHDB_DEFAULT_HOST,
-                             HT_KEY_EXISTS(db_config, db_port) ? HT_GET_LVAL(db_config, db_port) : COUCHDB_DEFAULT_PORT,
-                             HT_KEY_EXISTS(db_config, db_timeout) ? HT_GET_LVAL(db_config, db_timeout) : COUCHDB_DEFAULT_TIMEOUT,
-                             HT_KEY_EXISTS(db_config, db_return_type) ? HT_GET_LVAL(db_config, db_return_type) : 0);
+    tmp = connection_default(HT_KEY_EXISTS(db_config, db_user)
+                                 ? HT_GET_STRVAL(db_config, db_user)
+                                 : "",
+                             HT_KEY_EXISTS(db_config, db_pass)
+                                 ? HT_GET_STRVAL(db_config, db_pass)
+                                 : "",
+                             HT_KEY_EXISTS(db_config, db_host)
+                                 ? HT_GET_STRVAL(db_config, db_host)
+                                 : COUCHDB_DEFAULT_HOST,
+                             HT_KEY_EXISTS(db_config, db_port)
+                                 ? HT_GET_LVAL(db_config, db_port)
+                                 : COUCHDB_DEFAULT_PORT,
+                             HT_KEY_EXISTS(db_config, db_timeout)
+                                 ? HT_GET_LVAL(db_config, db_timeout)
+                                 : COUCHDB_DEFAULT_TIMEOUT,
+                             HT_KEY_EXISTS(db_config, db_return_type)
+                                 ? HT_GET_LVAL(db_config, db_return_type)
+                                 : 0);
   }
 
   object_init_ex(return_value, couch_ce);
@@ -216,6 +229,9 @@ void couchdb_connect(INTERNAL_FUNCTION_PARAMETERS)
   zend_string_release(db_user);
   zend_string_release(db_pass);
   zend_string_release(db_host);
+  zend_string_release(db_port);
+  zend_string_release(db_return_type);
+  zend_string_release(db_timeout);
 }
 void couchdb_session_init(INTERNAL_FUNCTION_PARAMETERS)
 {
@@ -235,7 +251,8 @@ void couchdb_session_init(INTERNAL_FUNCTION_PARAMETERS)
     add_assoc_string(&body, "name", couch->conn->user);
     add_assoc_string(&body, "password", couch->conn->pass);
 
-    couchdb_response *resp = couch_http_request(HTTP_POST, couch->conn, "/_session", php_json_stringify(&body));
+    couchdb_response *resp = couch_http_request(HTTP_POST, couch->conn, "/_session",
+                                                php_json_stringify(&body));
 
     if (resp->valid)
     {
@@ -333,7 +350,8 @@ void couchdb_all_docs(INTERNAL_FUNCTION_PARAMETERS)
 
       add_assoc_zval(&keys, "keys", db_keys);
 
-      resp = couch_http_request(HTTP_POST, couch->conn, string_list_concat(params), php_json_stringify(&keys));
+      resp = couch_http_request(HTTP_POST, couch->conn, string_list_concat(params),
+                                php_json_stringify(&keys));
     }
 
     RETURN_COUCHDB(couch->conn->format, resp, output);
@@ -487,7 +505,8 @@ void couchdb_create_ddoc(INTERNAL_FUNCTION_PARAMETERS)
     string_list *params = string_list_init();
     string_list_add_n(params, 4, "/", ZSTR_VAL(db_database), "/_design/", ZSTR_VAL(db_design));
 
-    couchdb_response *resp = couch_http_request(HTTP_POST, couch->conn, string_list_concat(params), php_json_stringify(db_options));
+    couchdb_response *resp = couch_http_request(HTTP_POST, couch->conn, string_list_concat(params),
+                                                php_json_stringify(db_options));
 
     RETURN_COUCHDB_BOOL(resp, NULL);
 
@@ -777,7 +796,8 @@ void couchdb_query_view(INTERNAL_FUNCTION_PARAMETERS)
 }
 
 #ifdef ASYNC_H
-async couchdb_async_func_call(struct async ptr, int *status, zval *fn, zval *args, zval *retval, zval *output)
+async couchdb_async_func_call(struct async ptr, int *status, zval *fn, zval *args,
+                              zval *retval, zval *output)
 {
   async_begin(&ptr);
 
@@ -795,7 +815,8 @@ async couchdb_async_func_call(struct async ptr, int *status, zval *fn, zval *arg
 
   async_end;
 }
-async couchdb_execute_async_transactions(struct async ptr, zval *transactions, zval *action, zval *output)
+async couchdb_execute_async_transactions(struct async ptr, zval *transactions,
+                                         zval *action, zval *output)
 {
   async_begin(&ptr);
 

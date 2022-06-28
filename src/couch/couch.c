@@ -37,7 +37,8 @@ couchdb_connection *connection_default(char *user, char *pass, char *host,
 }
 couchdb_connection *connection_local(_Bool format)
 {
-  return connection_define("", "", "", COUCHDB_DEFAULT_HOST, COUCHDB_DEFAULT_PORT, COUCHDB_DEFAULT_TIMEOUT, format);
+  return connection_define("", "", "", COUCHDB_DEFAULT_HOST, COUCHDB_DEFAULT_PORT,
+                           COUCHDB_DEFAULT_TIMEOUT, format);
 }
 couchdb_connection *connection_token(char *token, char *host, long port,
                                      long timeout, _Bool format)

@@ -95,9 +95,11 @@ char *extract_couchdb_response_error(char *response);
 
 #ifdef ASYNC_H
 /* asynchronously execute functions subsumed in a PHP variable - in a protothread */
-async couchdb_async_func_call(struct async ptr, int *status, zval *fn, zval *args, zval *retval, zval *output);
+async couchdb_async_func_call(struct async ptr, int *status, zval *fn, zval *args,
+                              zval *retval, zval *output);
 /* asynchronously proxy asynchronous transactions defined in a PHP array to the couchdb_async_func_call function */
-async couchdb_execute_async_transactions(struct async ptr, zval *transactions, zval *action, zval *output);
+async couchdb_execute_async_transactions(struct async ptr, zval *transactions,
+                                         zval *action, zval *output);
 #endif
 
 /* establishes CouchDB configuration */
