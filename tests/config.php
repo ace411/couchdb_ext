@@ -18,6 +18,7 @@
 
 define('COUCHDB_USER', 'root');
 define('COUCHDB_PASS', 'admin');
+define('COUCHDB_HOST', 'http://localhost');
 
 /**
  * configure
@@ -33,6 +34,7 @@ function configure(array $config = []): CouchDb
 			[
 				'user' => COUCHDB_USER,
 				'pass' => COUCHDB_PASS,
+				'host' => COUCHDB_HOST,
 			],
 			$config,
 		),
