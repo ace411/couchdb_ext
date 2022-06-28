@@ -13,31 +13,35 @@ if (!$session->available()) {
 require_once 'config.php';
 require_once 'helpers.php';
 
-$basic    = configure(
-  [
-    'type' => CouchDb::RETURN_ARRAY,
-  ],
-);
-$session  = $basic->session();
-$docs     = $session->documents('recipes', ['Pilau', 'Katogo']);
-
-$revs     = getRevsFromDocs($docs['rows'] ?? null);
-
-echo is_bool(
-  $session->deleteDocuments(
-    'recipes',
+try {
+  $basic    = configure(
     [
-      [
-        '_id'       => 'Pilau',
-        '_rev'      => $revs[0] ?? '',
-      ],
-      [
-        '_id'       => 'Katogo',
-        '_rev'      => $revs[1] ?? '',
-      ],
+      'type' => CouchDb::RETURN_ARRAY,
     ],
-  ),
-) ? 'true' : 'false';
+  );
+  $session  = $basic->session();
+  $docs     = $session->documents('recipes', ['Pilau', 'Katogo']);
+
+  $revs     = getRevsFromDocs($docs['rows'] ?? null);
+
+  echo is_bool(
+    $session->deleteDocuments(
+      'recipes',
+      [
+        [
+          '_id'       => 'Pilau',
+          '_rev'      => $revs[0] ?? '',
+        ],
+        [
+          '_id'       => 'Katogo',
+          '_rev'      => $revs[1] ?? '',
+        ],
+      ],
+    ),
+  ) ? 'true' : 'false';
+} catch (CouchDbException $_) {
+  echo 'true';
+}
 ?>
 --EXPECT--
 true

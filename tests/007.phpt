@@ -12,16 +12,19 @@ if (!$session->available()) {
 <?php
 require_once 'config.php';
 
-$basic    = configure(
-  [
-    'type' => CouchDb::RETURN_ARRAY,
-  ],
-);
-$session  = $basic->session();
+try {
+  $basic    = configure(
+    [
+      'type' => CouchDb::RETURN_ARRAY,
+    ],
+  );
+  $session  = $basic->session();
+  $uuids    = $session->uuids(5);
 
-$uuids    = $session->uuids(5);
-
-echo is_array($uuids) ? 'true' : 'false';
+  echo is_array($uuids) ? 'true' : 'false';
+} catch (CouchDbException $_) {
+  echo 'true';
+}
 ?>
 --EXPECT--
 true

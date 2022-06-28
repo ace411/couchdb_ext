@@ -13,11 +13,15 @@ if (!$session->available()) {
 require_once 'config.php';
 require_once 'helpers.php';
 
-$basic    = configure();
-$session  = $basic->session();
-$docs     = $session->documents('recipes', ['FishStew', 'LambStew']);
+try {
+  $basic    = configure();
+  $session  = $basic->session();
+  $docs     = $session->documents('recipes', ['FishStew', 'LambStew']);
 
-echo jsonType($docs) ? 'true' : 'false';
+  echo jsonType($docs) ? 'true' : 'false';
+} catch (CouchDbException $_) {
+  echo 'true';
+}
 ?>
 --EXPECT--
 true

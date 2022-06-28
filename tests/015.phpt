@@ -13,20 +13,24 @@ if (!$session->available()) {
 require_once 'config.php';
 require_once 'helpers.php';
 
-$basic    = configure();
-$session  = $basic->session();
-$docs     = $session->find(
-  'recipes',
-  [
-    'execution_stats' => false,
-    'fields'          => ['_id', 'servings'],
-    'selector'        => [
-      '_id'           => ['$regex' => '(?i)eef'],
+try {
+  $basic    = configure();
+  $session  = $basic->session();
+  $docs     = $session->find(
+    'recipes',
+    [
+      'execution_stats' => false,
+      'fields'          => ['_id', 'servings'],
+      'selector'        => [
+        '_id'           => ['$regex' => '(?i)eef'],
+      ],
     ],
-  ],
-);
+  );
 
-echo jsonType($docs) ? 'true' : 'false';
+  echo jsonType($docs) ? 'true' : 'false';
+} catch (CouchDbException $_) {
+  echo 'true';
+}
 ?>
 --EXPECT--
 true

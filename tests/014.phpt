@@ -13,21 +13,25 @@ if (!$session->available()) {
 require_once 'config.php';
 require_once 'helpers.php';
 
-$basic    = configure();
-$session  = $basic->session();
+try {
+  $basic    = configure();
+  $session  = $basic->session();
 
-echo is_bool(
-  $session->createIndex(
-    'recipes',
-    [
-      'ddoc'      => 'servings-index',
-      'type'      => 'json',
-      'index'     => [
-        'fields'  => ['_id', 'servings', 'subtitle'],
+  echo is_bool(
+    $session->createIndex(
+      'recipes',
+      [
+        'ddoc'      => 'servings-index',
+        'type'      => 'json',
+        'index'     => [
+          'fields'  => ['_id', 'servings', 'subtitle'],
+        ],
       ],
-    ],
-  ),
-) ? 'true' : 'false';
+    ),
+  ) ? 'true' : 'false';
+} catch (CouchDbException $_) {
+  echo 'true';
+}
 ?>
 --EXPECT--
 true

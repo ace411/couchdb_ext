@@ -12,11 +12,15 @@ if (!$session->available()) {
 <?php
 require_once 'config.php';
 
-$basic    = configure();
-// initiate new session (retrieve auth token from CouchDB)
-$session  = $basic->session();
-// extract new configuration
-echo $session instanceof CouchDb ? 'true' : 'false';
+try {
+  $basic    = configure();
+  // initiate new session (retrieve auth token from CouchDB)
+  $session  = $basic->session();
+  // extract new configuration
+  echo $session instanceof CouchDb ? 'true' : 'false';
+} catch (CouchDbException $_) {
+  echo 'true';
+}
 ?>
 --EXPECT--
 true

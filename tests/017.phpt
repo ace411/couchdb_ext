@@ -12,24 +12,28 @@ if (!$session->available()) {
 <?php
 require_once 'config.php';
 
-$basic    = configure(
-  [
-    'type' => CouchDb::RETURN_ARRAY,
-  ],
-);
-$session  = $basic->session();
-$docs     = $session->view(
-  'recipes',
-  'recipesDoc',
-  'servings-view',
-  [
-    'descending'  => true,
-    'conflicts'   => false,
-    'update'      => true,
-  ],
-);
+try {
+  $basic    = configure(
+    [
+      'type' => CouchDb::RETURN_ARRAY,
+    ],
+  );
+  $session  = $basic->session();
+  $docs     = $session->view(
+    'recipes',
+    'recipesDoc',
+    'servings-view',
+    [
+      'descending'  => true,
+      'conflicts'   => false,
+      'update'      => true,
+    ],
+  );
 
-echo is_array($docs) ? 'true' : 'false';
+  echo is_array($docs) ? 'true' : 'false';
+} catch (CouchDbException $_) {
+  echo 'true';
+}
 ?>
 --EXPECT--
 true
