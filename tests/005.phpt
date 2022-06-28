@@ -19,9 +19,9 @@ object(CouchDb)#1 (1) {
   [0]=>
   array(7) {
     ["user"]=>
-    string(4) "root"
-    ["password"]=>
     string(5) "admin"
+    ["password"]=>
+    string(8) "password"
     ["token"]=>
     string(0) ""
     ["host"]=>
