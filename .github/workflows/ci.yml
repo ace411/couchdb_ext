@@ -6,7 +6,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['7.4', '8.0', '8.1']
+        php: ['8.0', '8.1']
         couchdb: ['3', '2.3']
     name: PHP ${{ matrix.php }}
     steps:
@@ -22,9 +22,6 @@ jobs:
       - name: Install libcurl
         run: |
           sudo apt-get install libcurl4-openssl-dev
-      - name: Authenticate CouchDB admin user
-        run: |
-          curl -X POST -H 'content-type: application/json' -d '{"name": "admin", "password": "password"}' http://localhost:5984/_session
       - name: Install async.h
         run: |
           sudo sh async.sh

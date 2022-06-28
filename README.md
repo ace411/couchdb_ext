@@ -6,7 +6,7 @@ A simple PHP extension for CouchDB.
 
 - libcurl
 
-- PHP 7.4 or newer
+- PHP 8 or newer
 
 - async.h
 
