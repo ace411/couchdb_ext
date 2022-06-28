@@ -61,7 +61,7 @@ if test "$PHP_COUCHDB" != "no"; then
   done
 
   if test $HAVE_ASYNCH == "0"; then
-    AC_MSG_NOTICE([Consider installing async.h for a better experience])
+    AC_MSG_ERROR([Please check your async.h installation])
   fi
 
   PHP_ADD_EXTENSION_DEP(couchdb, json)
