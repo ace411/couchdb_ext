@@ -173,6 +173,10 @@ zend_class_entry *couch_exception_ce;
     {                                                                         \
       RETURN_BOOL((zend_bool)1);                                              \
     }                                                                         \
+    else                                                                      \
+    {                                                                         \
+      RETURN_BOOL((zend_bool)0);                                              \
+    }                                                                         \
   }                                                                           \
   else                                                                        \
   {                                                                           \
