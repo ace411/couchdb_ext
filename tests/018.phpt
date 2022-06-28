@@ -2,10 +2,9 @@
 changes() retrieves a history of all actions performed on a database
 --SKIPIF--
 <?php
-require_once 'config.php';
+require_once 'auth.php';
 
-$basic = configure();
-if (!$basic->available()) {
+if (!$session->available()) {
   echo 'skip';
 }
 ?>

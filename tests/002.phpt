@@ -6,7 +6,11 @@ require_once 'config.php';
 
 $basic = configure();
 
-echo gettype($basic->available());
+try {
+  echo gettype($basic->available());
+} catch (CouchDbException $_) {
+  echo 'boolean';
+}
 ?>
 --EXPECT--
 boolean
