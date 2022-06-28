@@ -8,7 +8,7 @@ A simple PHP extension for CouchDB.
 
 - PHP 7.4 or newer
 
-- async.h library (optional)
+- async.h
 
 ## Installation
 
@@ -20,25 +20,9 @@ Installing libcurl can be done by typing the following in a console of your choo
 $ sudo apt-get install libcurl4-openssl-dev
 ```
 
-Upon successful libcurl installation, proceed to type the following to install php-couchdb.
-
-```sh
-$ phpize
-$ ./configure --enable-couchdb --with-curl="/path/to/libcurl"
-$ make && sudo make install
-```
-
-> Remember to add the `couchdb` shared object file (`extension=couchdb`) to your `php.ini` file to operationalize the extension.
-
-If you intend to run the tests, the following should suffice.
-
-```sh
-$ make test
-```
-
 ### Enabling asynchronous transactions
 
-The asynchrony in the couchdb extension - that powers its transaction feature - is a caller-based fork-join model. If you intend to write transactions - and atomically execute several CouchDB transactions - you will have to install the [async.h](https://github.com/naasking/async.h) library in any one of several possible global include directories (`/usr/include`, `/usr/local/include` and such).
+The asynchrony in the couchdb extension - that powers its transaction feature - is a caller-based fork-join model. Considering `couchdb` cannot work without [async.h](https://github.com/naasking/async.h), you will have to install the library in any one of several possible global include directories (`/usr/include`, `/usr/local/include`, `/usr/local/opt/include`).
 
 You can install the said library - by executing the `async.sh` shell script in this project's root directory - by typing the following.
 
@@ -53,7 +37,21 @@ If you have downloaded the library yourself, you can supply the path to the libr
 $ ./async.sh path/to/async.h
 ```
 
-> Remember to install `async.h` before building couchdb.
+Upon successfully installing each of the aforedescribed dependencies, proceed to type the following to install `couchdb`.
+
+```sh
+$ phpize
+$ ./configure --enable-couchdb --with-curl="/path/to/libcurl"
+$ make && sudo make install
+```
+
+> Remember to add the `couchdb` shared object file (`extension=couchdb`) to your `php.ini` file to operationalize the extension.
+
+If you intend to run the tests, the following should suffice.
+
+```sh
+$ make test
+```
 
 ## Basic Usage
 
