@@ -2,7 +2,9 @@
 transaction() executes several CouchDB actions in protothreads
 --SKIPIF--
 <?php
-$basic = CouchDb::connect();
+require_once 'config.php';
+
+$basic = configure();
 if (!$basic->available()) {
   echo 'skip';
 }

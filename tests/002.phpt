@@ -2,7 +2,9 @@
 available() checks if CouchDB is available at a specified address
 --FILE--
 <?php
-$basic = CouchDb::connect();
+require_once 'config.php';
+
+$basic = configure();
 
 echo gettype($basic->available());
 ?>

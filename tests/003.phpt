@@ -2,19 +2,18 @@
 session() creates new CouchDB connection
 --SKIPIF--
 <?php
-$basic = CouchDb::connect();
+require_once 'config.php';
+
+$basic = configure();
 if (!$basic->available()) {
   echo 'skip';
 }
 ?>
 --FILE--
 <?php
-$basic    = CouchDb::connect(
-  [
-    'user' => 'root',
-    'pass' => 'admin',
-  ],
-);
+require_once 'config.php';
+
+$basic    = configure();
 // initiate new session (retrieve auth token from CouchDB)
 $session  = $basic->session();
 // extract new configuration

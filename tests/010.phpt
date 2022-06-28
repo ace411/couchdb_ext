@@ -2,7 +2,9 @@
 insertDocuments() creates multiple documents
 --SKIPIF--
 <?php
-$basic = CouchDb::connect();
+require_once 'config.php';
+
+$basic = configure();
 if (!$basic->available()) {
   echo 'skip';
 }

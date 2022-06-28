@@ -2,7 +2,9 @@
 find() performs parameterized Mango Query-powered database search
 --SKIPIF--
 <?php
-$basic = CouchDb::connect();
+require_once 'config.php';
+
+$basic = configure();
 if (!$basic->available()) {
   echo 'skip';
 }

@@ -2,7 +2,9 @@
 databases() returns list of all databases
 --SKIPIF--
 <?php
-$basic = CouchDb::connect();
+require_once 'config.php';
+
+$basic = configure();
 if (!$basic->available()) {
   echo 'skip';
 }

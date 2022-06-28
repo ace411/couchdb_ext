@@ -2,7 +2,9 @@
 view() queries a view and retrieves all the records it is configured to project
 --SKIPIF--
 <?php
-$basic = CouchDb::connect();
+require_once 'config.php';
+
+$basic = configure();
 if (!$basic->available()) {
   echo 'skip';
 }

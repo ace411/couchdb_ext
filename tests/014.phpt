@@ -2,7 +2,9 @@
 createIndex() creates a CouchDB index for a specified database
 --SKIPIF--
 <?php
-$basic = CouchDb::connect();
+require_once 'config.php';
+
+$basic = configure();
 if (!$basic->available()) {
   echo 'skip';
 }
