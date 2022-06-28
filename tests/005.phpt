@@ -25,11 +25,11 @@ object(CouchDb)#1 (1) {
     ["token"]=>
     string(0) ""
     ["host"]=>
-    string(16) "http://127.0.0.1"
+    string(16) "http://localhost"
     ["timeout"]=>
     int(60)
     ["port"]=>
-    int(5879)
+    int(5984)
     ["type"]=>
     string(4) "JSON"
   }
