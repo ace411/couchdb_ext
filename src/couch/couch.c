@@ -15,7 +15,9 @@
 */
 #include "couch.h"
 
-couchdb_connection *connection_define(char *user, char *pass, char *token, char *host, long port, long timeout, _Bool format)
+couchdb_connection *connection_define(char *user, char *pass, char *token,
+                                      char *host, long port, long timeout,
+                                      _Bool format)
 {
   couchdb_connection *conn = malloc(sizeof(couchdb_connection));
   conn->user = user;
@@ -28,7 +30,8 @@ couchdb_connection *connection_define(char *user, char *pass, char *token, char 
 
   return conn;
 }
-couchdb_connection *connection_default(char *user, char *pass, char *host, long port, long timeout, _Bool format)
+couchdb_connection *connection_default(char *user, char *pass, char *host,
+                                       long port, long timeout, _Bool format)
 {
   return connection_define(user, pass, "", host, port, timeout, format);
 }
@@ -36,7 +39,8 @@ couchdb_connection *connection_local(_Bool format)
 {
   return connection_define("", "", "", COUCHDB_DEFAULT_HOST, COUCHDB_DEFAULT_PORT, COUCHDB_DEFAULT_TIMEOUT, format);
 }
-couchdb_connection *connection_token(char *token, char *host, long port, long timeout, _Bool format)
+couchdb_connection *connection_token(char *token, char *host, long port,
+                                     long timeout, _Bool format)
 {
   return connection_define("", "", token, host, port, timeout, format);
 }

@@ -241,18 +241,21 @@ void couchdb_session_init(INTERNAL_FUNCTION_PARAMETERS)
     {
       if (resp->token != NULL)
       {
-        tmp = connection_token(resp->token, couch->conn->host, couch->conn->port, couch->conn->timeout, couch->conn->format);
+        tmp = connection_token(resp->token, couch->conn->host, couch->conn->port,
+                               couch->conn->timeout, couch->conn->format);
       }
       else
       {
-        tmp = connection_define(couch->conn->user, couch->conn->pass, couch->conn->token, couch->conn->host, couch->conn->port,
-                                couch->conn->timeout, couch->conn->format);
+        tmp = connection_define(couch->conn->user, couch->conn->pass, couch->conn->token,
+                                couch->conn->host, couch->conn->port, couch->conn->timeout,
+                                couch->conn->format);
       }
     }
     else
     {
-      tmp = connection_define(couch->conn->user, couch->conn->pass, couch->conn->token, couch->conn->host, couch->conn->port,
-                              couch->conn->timeout, couch->conn->format);
+      tmp = connection_define(couch->conn->user, couch->conn->pass, couch->conn->token,
+                              couch->conn->host, couch->conn->port, couch->conn->timeout,
+                              couch->conn->format);
     }
 
     ZVAL_OBJ(return_value, php_couchdb_connection_create_object_ex(tmp));

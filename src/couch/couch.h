@@ -99,13 +99,17 @@ enum _http_methods
 } http_methods;
 
 /* define CouchDB connection parameters */
-couchdb_connection *connection_define(char *user, char *pass, char *token, char *host, long port, long timeout, _Bool format);
+couchdb_connection *connection_define(char *user, char *pass, char *token,
+                                      char *host, long port, long timeout,
+                                      _Bool format);
 /* initialize connection with user and password credentials (default) */
-couchdb_connection *connection_default(char *user, char *pass, char *host, long port, long timeout, _Bool format);
+couchdb_connection *connection_default(char *user, char *pass, char *host,
+                                       long port, long timeout, _Bool format);
 /* initialize connection with default connection parameters (ideal for local connections) */
 couchdb_connection *connection_local(_Bool format);
 /* initialize connection with authorization token */
-couchdb_connection *connection_token(char *token, char *host, long port, long timeout, _Bool format);
+couchdb_connection *connection_token(char *token, char *host, long port,
+                                     long timeout, _Bool format);
 
 /* subsumes response data in couchdb_response artifact */
 couchdb_response *response_define(_Bool valid, char *msg, char *token);
