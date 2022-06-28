@@ -177,7 +177,7 @@ PHP_MINIT_FUNCTION(couchdb)
 	zend_class_entry couchdb_ce;
 	zend_class_entry couchdb_exception_ce;
 	INIT_CLASS_ENTRY(couchdb_ce, "CouchDb", ext_functions);
-	INIT_CLASS_ENTRY(couchdb_exception_ce, "CouchdbException", NULL);
+	INIT_CLASS_ENTRY(couchdb_exception_ce, "CouchDbException", NULL);
 
 	couch_ce = zend_register_internal_class(&couchdb_ce);
 	couch_ce->create_object = php_couchdb_connection_create_object;
