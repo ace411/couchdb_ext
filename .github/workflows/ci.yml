@@ -24,7 +24,7 @@ jobs:
           sudo apt-get install libcurl4-openssl-dev
       - name: Install async.h
         run: |
-          chmod a+x async.sh && ./async.sh
+          sudo sh async.sh
       - name: Run tests
         run: |
           phpize && ./configure --enable-couchdb && \
