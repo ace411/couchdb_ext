@@ -22,6 +22,9 @@ jobs:
       - name: Install libcurl
         run: |
           sudo apt-get install libcurl4-openssl-dev
+      - name: Authenticate CouchDB admin user
+        run: |
+          curl -X POST -H 'content-type: application/json' -d '{"name": "admin", "password": "password"}' http://localhost:5984/_session
       - name: Install async.h
         run: |
           sudo sh async.sh
