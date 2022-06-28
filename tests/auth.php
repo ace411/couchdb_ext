@@ -16,27 +16,12 @@
 	 +----------------------------------------------------------------------+
 */
 
-define('COUCHDB_USER', 'admin');
-define('COUCHDB_PASS', 'password');
-define('COUCHDB_HOST', 'http://localhost');
+require_once 'config.php';
 
-/**
- * configure
- * create custom CouchDB configurations
- * 
- * @param array $config
- * @return CouchDb
- */
-function configure(array $config = []): CouchDb
-{
-  return CouchDb::connect(
-    array_merge(
-			[
-				'user' => COUCHDB_USER,
-				'pass' => COUCHDB_PASS,
-				'host' => COUCHDB_HOST,
-			],
-			$config,
-		),
-  );
+$basic = configure();
+
+try {
+  $session = $basic->session();
+} catch (CouchDbException $exp) {
+  $session = $basic;
 }

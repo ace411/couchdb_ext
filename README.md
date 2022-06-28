@@ -1,481 +1,763 @@
-# couchdb_ext
-
-[![Build Status](https://travis-ci.org/ace411/couchdb_ext.svg?branch=master)](https://travis-ci.org/ace411/couchdb_ext)
+# php-couchdb
 
 A simple PHP extension for CouchDB.
 
 ## Requirements
 
-- [libcurl](https://https://curl.haxx.se/libcurl/)
+- libcurl
 
-- PHP 7.2 or greater
+- PHP 8 or newer
+
+- async.h
 
 ## Installation
 
-Because `couchdb_ext` is an extension built on top of libcurl, installation of said utility is a mandatory prerequisite for using this tool.
+Because couchdb is an extension built on top of libcurl, installation of said utility is a mandatory prerequisite for using this tool.
 
-Installing libcurl can be done by typing the following in a console of your choosing:
+Installing libcurl can be done by typing the following in a console of your choosing.
 
-```shell
-sudo apt-get install libcurl4-openssl-dev
+```sh
+$ sudo apt-get install libcurl4-openssl-dev
 ```
 
-Upon successful installation of libcurl, type the following - also in a console - to install `couchdb_ext`:
+### Enabling asynchronous transactions
 
-```shell
-phpize
-./configure --enable-couchdb_ext --with-curl=/path/to/curl
-make && sudo make install
+The asynchrony in the couchdb extension - that powers its transaction feature - is a caller-based fork-join model. Considering `couchdb` cannot work without [async.h](https://github.com/naasking/async.h), you will have to install the library in any one of several possible global include directories (`/usr/include`, `/usr/local/include`, `/usr/local/opt/include`).
+
+You can install the said library - by executing the `async.sh` shell script in this project's root directory - by typing the following.
+
+```sh
+$ chmod a+x async.sh
+$ ./async.sh
 ```
 
-> Do not forget to enable the extension by adding `extension=couchdb_ext` to your `php.ini` file.
+If you have downloaded the library yourself, you can supply the path to the library directory - directly to the `async.sh` script - as a command line argument.
 
-If you intend to run the tests in the tests directory, run the following command:
-
-```shell
-make test
+```sh
+$ ./async.sh path/to/async.h
 ```
 
-## Docker
+Upon successfully installing each of the aforedescribed dependencies, proceed to type the following to install `couchdb`.
 
-There exists a Docker image for this extension. You can find it in the [docker_couchdb_ext](https://github.com/peter279k/docker_couchdb_ext) repository.
+```sh
+$ phpize
+$ ./configure --enable-couchdb --with-curl="/path/to/libcurl"
+$ make && sudo make install
+```
 
-## Rationale
+> Remember to add the `couchdb` shared object file (`extension=couchdb`) to your `php.ini` file to operationalize the extension.
 
-I published the [fauxton API client](https://github.com/php-api-clients/fauxton), an asynchronous - non-blocking IO solution which is relatively more performant than the [synchronous version](https://github.com/ace411/fauxton-client) I wrote earlier.
+If you intend to run the tests, the following should suffice.
 
-Also, there exists an [article](https://medium.com/@agiroLoki/a-potential-php-extension-for-couchdb-9604cda48f27) whose premise is farther justifying this undertaking.
+```sh
+$ make test
+```
 
 ## Basic Usage
 
-The snippet below is code that can be quite useful in not only configuring CouchDB, but also in determining if the service is available so as to subsequently generate five Universally Unique Identifiers (UUIDs).
+The snippet below demonstrates how to configure CouchDB for local installations, determine if the service is available - and subsequently generate five Universally Unique Identifiers (UUIDs).
 
 ```php
-if (!extension_loaded("couchdb_ext")) {
-    echo "Extension not loaded.";
+$basic = CouchDb::connect();
+
+if (!$basic->isAvailable()) {
+  exit();
 }
 
-$couch = new CouchDb([
-    'user'      => 'your-username',
-    'pass'      => 'your-password',
-    'host'      => 'your-host (localhost or cloudant)',
-    'port'      => 5984,
-    'timeout'   => 60,
-]);
+echo $basic->uuids(5);
+```
 
-if (!$couch->isAvailable()) {
-    echo "Could not find a running instance of CouchDB";
+## API Reference
+
+```php
+class CouchDb
+{
+  /* Constants */
+  public const RETURN_ARRAY;
+  public const RETURN_JSON;
+
+  /* Methods */
+  public static connect( array $config ) : CouchDb;
+  public session() : CouchDb;
+  public isAvailable() : bool;
+  public uuids( int $count ) : string|array;
+  public databases() : string|array;
+  public database( string $database ) : string|array;
+  public createDatabase( string $database ) : bool;
+  public deleteDatabase( string $database ) : bool;
+  public insertDocuments( string $database [, array $documents ] ) : bool;
+  public document( string $database [, string $documentId ] ) : string|array;
+  public documents( string $database [, array $keys = null ] ) : string|array;
+  public updateDocuments( string $database [, array $documents ] ) : bool;
+  public deleteDocuments( string $database [, array $documents ] ) : bool;
+  public find( string $database [, array $query ] ) : string|array;
+  public createIndex( string $database [, array $options ] ) : bool;
+  public createDesignDocument( string $database [, string $designDocument [, array $options ]] ) : bool;
+  public view( string $database [, string $designDocument [, string $view [, array $options ]]] ) : string|array;
+  public changes( string $database [, array $options = null ] ) : bool;
+  public transaction( array $transactions ) : array;
 }
-
-echo $couch->uuids(5);
 ```
 
-## API reference
+### connect
 
-### \_\_construct
-
-```
-__construct(array $options)
-```
-
-**Argument(s):**
-
-- **_options (array)_** - Configuration options array
-  - **_host (string)_** - CouchDB host
-  - **_user (string)_** - CouchDB username
-  - **_pass (string)_** - CouchDB password
-  - **_port (integer)_** - CouchDB port (defaults to 5984)
-  - **_timeout (integer)_** - Request timeout (defaults to 60)
-
-Creates an instance of the CouchDb class.
+Parametrically instantiates the CouchDb class.
 
 ```php
-const CONFIG = [
-    'user'      => 'your-username',
-    'pass'      => 'your-password',
-    'host'      => 'your-host (localhost or cloudant)',
-    'port'      => 5984,
-    'timeout'   => 60,
-];
-
-$couchDb = new CouchDb(CONFIG);
+public CouchDb::connect(array $config);
 ```
 
-### isAvailable
+Establishes the parameters for [Basic Auth-enabled](https://docs.couchdb.org/en/stable/api/server/authn.html#basic-authentication) CouchDB interactions.
 
-```
-isAvailable(): bool
-```
+#### Parameters
 
-**Argument(s):**
-
-> _None_
-
-Checks if the database at the constructor-specified location is present.
+- **config** (array) - List of configuration options
+  - **host** (string) - Base URI for CouchDB interactions
+  - **user** (string) - Arbitrary CouchDB username
+  - **pass** (string) - Arbitrary CouchDB password
+  - **port** (string) - CouchDB port
+  - **timeout** (string) - Timeout for requests made to CouchDB server
+  - **type** (integer) - Return type for request data
 
 ```php
+// default parameters
+$basic = CouchDb::connect(
+  [
+    'host'    => 'http://127.0.0.1',
+    'user'    => '',
+    'pass'    => '',
+    'token'   => '',
+    'port'    => 5984,
+    'timeout' => 60,
+    'type'    => CouchDb::RETURN_JSON,
+  ],
+);
+```
 
-if ($couch->isAvailable()) {
-    echo $couch->allDocs('your-database');
+### session
+
+Retrieves auth token from CouchDB.
+
+```php
+public CouchDb::session();
+```
+
+This method effectively exchanges the `user` and `password` information specified in class instantiation for an [auth token](https://docs.couchdb.org/en/stable/api/server/authn.html#cookie-authentication) and thence places the said token in the CouchDb object's parameterized state. It jettisons previously assigned `user` and `password` information.
+
+> `session` persists all non-credential configuration from a previous `connect` call and is an [**opt-in** feature](https://).
+
+#### Parameters
+
+> None
+
+```php
+$basic = CouchDb::connect(
+  [
+    'user' => 'root',
+    'pass' => 'admin',
+    'type' => CouchDb::RETURN_ARRAY,
+  ],
+);
+
+$session = $basic->session();
+```
+
+### available
+
+Checks if a CouchDB instance is available the specified address.
+
+```php
+public CouchDb::available();
+```
+
+#### Parameters
+
+> None
+
+```php
+$basic = CouchDb::connect();
+
+if ($basic->available()) {
+  echo 'Up and running!' . PHP_EOL;
 }
 ```
 
 ### uuids
 
-```
-uuids(int $count): string
-```
-
-**Argument(s):**
-
-- **_count (integer)_** - The number of uuids to generate
-
-Generates a specified number of Universally Unique Identifiers.
+Retrieves, from CouchDB, a specified number of Universally Unique Identifiers (UUIDs).
 
 ```php
-
-echo $couch->uuids(4); //returns JSON string
+public CouchDb::uuids(int $count);
 ```
 
-### createDb
+#### Parameters
 
-```
-createDb(string $database): bool
-```
-
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-
-Creates a database.
+- **count** (integer) - The number of UUIDs to generate
 
 ```php
-const DB_NAME = 'your-database';
+$basic = CouchDb::connect(
+  [
+    'user' => 'root',
+    'pass' => 'admin',
+  ],
+);
 
-if ($couch->createDb(DB_NAME)) {
-    $couch->insertDocs(DB_NAME, [
-        'docs' => [
-            [
-                '_id'       => 'FishStew',
-                'servings'  => 4,
-                'subtitle'  => 'Delicious with freshly baked bread'
-            ],
-            [
-                '_id'       => 'LambStew',
-                'servings'  => 6,
-                'subtitle'  => 'Serve with a whole meal scone topping'
-            ]
-        ]
-    ]);
+echo $basic->uuids(2);
+```
+
+### createDatabase
+
+Creates a new database.
+
+```php
+public CouchDb::createDatabase(string $database);
+```
+
+#### Parameters
+
+- **database** (string) - The name of the database to create
+
+```php
+$basic = CouchDb::connect(
+  [
+    'user' => 'root',
+    'pass' => 'admin',
+  ],
+);
+
+if ($basic->createDatabase('recipes')) {
+  echo 'Database created' . PHP_EOL;
 }
 ```
 
-### allDbs
+### databases
 
-```
-allDbs(): string
+Returns a list containing the names of all the databases available to a user.
+
+```php
+public CouchDb::databases();
 ```
 
-**Argument(s):**
+#### Parameters
 
 > None
 
-Outputs a list of all the databases available on disk.
+```php
+$basic = CouchDb::connect(
+  [
+    'user' => 'root',
+    'pass' => 'admin',
+  ],
+);
+
+echo $basic->databases();
+```
+
+### database
+
+Retrieves information about a specified database.
 
 ```php
-$dbs = json_decode($couch->allDbs(), true);
+public CouchDb::database(string $database);
+```
 
-if (!in_array('your-database', $dbs)) {
-    echo 'My database does not exist';
+### Parameters
+
+- **database** (string) - The name of the database the information about which you intend to retrieve
+
+```php
+$basic = CouchDb::connect(
+  [
+    'user' => 'root',
+    'pass' => 'admin',
+  ],
+);
+
+echo $basic->database('recipes');
+```
+
+### deleteDatabase
+
+Deletes a specified database.
+
+```php
+public CouchDb::deleteDatabase(string $database);
+```
+
+#### Parameters
+
+- **database** (string) - The database you intend to delete
+
+```php
+$basic = CouchDb::connect(
+  [
+    'user' => 'root',
+    'pass' => 'admin',
+  ],
+);
+
+$session = $basic->session();
+
+if ($session->deleteDatabase('vehicles')) {
+  echo 'Successfully purged!' . PHP_EOL;
 }
 ```
 
-### getDoc
+### document
 
-```
-getDoc(string $database, string $docId): string
-```
-
-**Argument(s):**
-
-- **_database (string)_** - CouchDB database
-- **_docId (string)_** - Unique document identifier
-
-Outputs the contents of a specified document.
+Retrieves the contents of a specified document.
 
 ```php
-echo $couch->getDoc('your-database', 'doc-id');
+public CouchDb::document(string $database, string $documentId);
 ```
 
-### allDocs
+#### Parameters
 
-```
-allDocs(string $database, array $options): string
-```
-
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-- **_options (array)_** - An array of [CouchDB-specific query options](http://docs.couchdb.org/en/stable/api/database/bulk-api.html#db-all-docs)
-
-Outputs a list of all documents in a specified database.
+- **database** (string) - The database from which to retrieve the document
+- **documentId** (string) - The unique identifier (`_id`) of the document whose information is to be retrieved
 
 ```php
-echo $couch->allDocs('your-database', [
-    'include_docs' => 'true',
-    'descending' => 'true'
-]);
+$basic = CouchDb::connect(
+  [
+    'user' => 'root',
+    'pass' => 'admin',
+    'type' => CouchDb::RETURN_ARRAY,
+  ],
+);
+
+$session = $basic->session();
+
+echo $session->document('recipes', 'BeefStew');
 ```
 
-### insertDocs
+### documents
 
-```
-insertDocs(string $database, array $docs): bool
-```
-
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-- **_docs (array)_** - The data to insert in the database
-
-Inserts data into a CouchDB database.
+Retrieves several documents in a single call.
 
 ```php
-$couch->insertDocs('your-database', [
-    'docs' => [
-        [
-            '_id'       => 'FishStew',
-            'servings'  => 4,
-            'subtitle'  => 'Delicious with freshly baked bread'
-        ],
-        [
-            '_id'       => 'LambStew',
-            'servings'  => 6,
-            'subtitle'  => 'Serve with a whole meal scone topping'
-        ]
-    ]
-]);
+public CouchDb::documents(string $database, array $keys = null);
 ```
 
-### search
+The method retrieves all documents in a specified database if a set of keys is not specified.
 
-```
-search(string $database, array $query): string
-```
+#### Parameters
 
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-- **_query (array)_** - The search query to execute
-
-Performs a Mango-query-powered search.
+- **database** (string) - The database from which you intend to retrieve a set of documents
+- **keys** (array) - A list of document identifiers with which to tune the server response
 
 ```php
-$github = $couch->search('your-database', [
-    'selector'              => [
-        'name' => ['$regex' => '(?i)ich']
+$basic = CouchDb::connect(
+  [
+    'user' => 'root',
+    'pass' => 'admin',
+  ],
+);
+
+echo $basic->documents('recipes', ['FishStew', 'LambStew']);
+```
+
+### insertDocuments
+
+Creates multiple documents.
+
+```php
+public CouchDb::insertDocuments(string $database, array $documents);
+```
+
+#### Parameters
+
+- **database** (string) - The database in which to insert documents
+- **documents** (array) - The document data to insert into a specified database
+
+```php
+$basic = CouchDb::connect(
+  [
+    'user' => 'root',
+    'pass' => 'admin',
+  ],
+);
+
+$session = $basic->session();
+
+if (
+  $session->insertDocuments(
+    'recipes',
+    [
+      [
+        '_id'       => 'FishStew',
+        'subtitle'  => 'Delicious with freshly baked bread',
+      ],
+      [
+        '_id'       => 'LambStew',
+        'subtitle'  => 'Serve with a whole meal scone topping',
+      ],
     ],
-    'fields'                => ['_id', 'name', 'github'],
-    'execution_stats'       => 'true'
-]);
+  )
+) {
+  echo 'Documents successfully created!' . PHP_EOL;
+}
+```
 
-var_dump(json_decode($github)); //returns a user object with specified fields
+### updateDocuments
+
+Updates multiple documents.
+
+```php
+public updateDocuments(string $database, array $documents);
+```
+
+#### Parameters
+
+- **database** (string) - The database whose documents you intend to modify
+- **documents** (array) - The list of contents, inclusive of `_id` and `_rev` keys with which to update entries in a database
+
+```php
+$basic = CouchDb::connect(
+  [
+    'user' => 'root',
+    'pass' => 'admin',
+  ],
+);
+
+if (
+  $basic->updateDocuments(
+    'recipes',
+    [
+      [
+        '_id'       => 'FishStew',
+        '_rev'      => '1-41669894c7d25a634f5de4fef75fb982',
+        'servings'  => 4,
+      ],
+      [
+        '_id'       => 'LambStew',
+        '_rev'      => '1-599acfa0c7b36889599bde56276e444c',
+        'servings'  => 6,
+      ],
+    ],
+  )
+) {
+  echo 'Database successfully updated!' . PHP_EOL;
+}
+```
+
+### deleteDocuments
+
+Deletes multiple documents.
+
+```php
+public deleteDocuments(string $database, array $documents);
+```
+
+#### Parameters
+
+- **database** (string) - The database whose documents you intend to delete
+- **documents** (array) - The list containing `_id` and `_rev` keys of the documents you intend to delete
+
+```php
+$basic = CouchDb::connect(
+  [
+    'user' => 'root',
+    'pass' => 'admin',
+  ],
+);
+
+$session = $basic->session();
+
+if (
+  $session->deleteDocuments(
+    'recipes',
+    [
+      [
+        '_id'   => 'Pilau',
+        '_rev'  => '1-599acfa0c7b36889599bde56276e444c',
+      ],
+      [
+        '_id'   => 'Katogo',
+        '_rev'  => '1-41669894c7d25a634f5de4fef75fb982',
+      ],
+    ],
+  )
+) {
+  echo 'Documents successfully deleted!' . PHP_EOL;
+}
+```
+
+### find
+
+Performs a parameterized Mango Query-powered database search.
+
+```php
+public CouchDb::find(string $database, array $query);
+```
+
+#### Parameters
+
+- **database** (string) - The database on which you intend to perform the search
+- **query** (array) - The database query parameters
+
+```php
+$basic = CouchDb::connect(
+  [
+    'user' => 'root',
+    'pass' => 'admin',
+    'type' => CouchDb::RETURN_ARRAY,
+  ],
+);
+
+echo $basic->find(
+  'recipes',
+  [
+    'execution_stats' => false,
+    'fields'          => ['_id', 'servings'],
+    'selector'        => [
+      '_id'           => ['$regex' => '(?i)eef'],
+    ],
+  ],
+);
 ```
 
 ### createIndex
 
-```
-createIndex(string $database, array $options, bool $partial = false): string
-```
-
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-- **_options (array)_** - Index creation options (see CouchDB documentation)
-- **_partial (boolean)_** - Partial flag that dictates index type (set to `true` if you intend to create a partial index)
-
-Creates a CouchDB index.
+Creates a CouchDB index for a specified database.
 
 ```php
-echo $couch->createIndex('your-database', [
-    'index' => [
-      'fields' => ['servings', '_id', 'subtitle']
-    ],
-    'ddoc'  => 'type-servings',
-    'type'  => 'json'
-]);
+public CouchDb::createIndex(string $database, array $options);
 ```
 
-> Setting the `$partial` flag to `true` means that the `partial_filter_selector` should feature in your options list.
+#### Parameters
 
-### createDdoc
-
-```
-createDdoc(string $database, string $ddoc, array $options): bool
-```
-
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-- **_ddoc (string)_** - The name of the design document
-- **_options (array)_** - ddoc options list (See documentation)
-
-Creates a design document.
+- **database** (string) - The database on which to define the index
+- **options** (array) - The list of options with which to configure the index
 
 ```php
-$couch->createDdoc('your-database', 'profileDoc', [
-    'language'  => 'javascript',
-    'views'     => [
-        'github-view' => [
-            'map' => 'function (doc) { emit(doc._id, doc.github) }'
-        ]
-    ]
-]);
-```
+$basic = CouchDb::connect(
+  [
+    'user' => 'root',
+    'pass' => 'admin',
+  ],
+);
 
-### queryView
+$session = $basic->session();
 
-```
-queryView(string $database, string $ddoc, string $view, array $opts): string
-```
-
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-- **_ddoc (string)_** - The name of the design document
-- **_view (string)_** - The view to query
-- **_options (array)_** - View query options (See CouchDB documentation)
-
-Queries a view in a specified database.
-
-```php
-['key' => $key, 'value' => $val] = json_decode($couch->queryView('your-database', 'profileDoc', 'github-view', [
-    'descending'    => 'true',
-    'conflicts'     => 'false',
-    'update'        => 'true'
-]), true);
-```
-
-### deleteDoc
-
-```
-deleteDoc(string $database, string $docId, string $docRev): bool
-```
-
-**Argument(s):**
-
-- **_database (string)_** - CouchDB database
-- **_docId (string)_** - Unique document identifier
-- **_docRev (string)_** - Unique document revision
-
-Deletes a specified document from a CouchDB database.
-
-```php
-
-$couch->deleteDoc('your-database', 'doc-id', 'doc-rev');
-```
-
-### deleteDocs
-
-```
-deleteDocs(string $database, array $docs): bool
-```
-
-**Argument(s):**
-
-- **_database (string)_** - CouchDB database
-- **_docs (array)_** - A list of documents
-
-> `_id` and `_rev` keys are mandatory for each `docs` array entry
-
-Deletes documents from a CouchDB database.
-
-```php
-$couch->deleteDocs('your-database', [
+if (
+  $session->createIndex(
+    'recipes',
     [
-        '_id'   => 'Pilau',
-        '_rev'  => '1-599acfa0c7b36889599bde56276e444c'
+      'ddoc'      => 'servings-index',
+      'type'      => 'json',
+      'index'     => [
+        'fields'  => ['_id', 'servings', 'subtitle'],
+      ],
     ],
+  )
+) {
+  echo 'Index successfully created!' . PHP_EOL;
+}
+```
+
+### createDesignDocument
+
+Creates a design document in a specified database.
+
+```php
+public CouchDb::createDesignDocument(
+  string $database,
+  string $designDocument,
+  array $options
+);
+```
+
+This method is especially useful for creating views the display parameters for which can be tuned via CouchDB map-reduce functions.
+
+#### Parameters
+
+- **database** (string) - The database in which to create the design document
+- **designDocument** (string) - The name of the design document
+- **options** (array) - The list of options with which to configure the design document
+
+```php
+$basic = CouchDb::connect(
+  [
+    'user' => 'root',
+    'pass' => 'admin',
+  ],
+);
+
+if (
+  $basic->createDesignDocument(
+    'recipes',
+    'recipesDoc',
     [
-        '_id'   => 'Katogo',
-        '_rev'  => '1-41669894c7d25a634f5de4fef75fb982'
-    ]
-]);
-```
-
-### updateDoc
-
-```
-updateDoc(string $database, string $docId, string $docRev, array $doc): bool
-```
-
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-- **_docId (string)_** - Unique document identifier
-- **_docRev (string)_** - Unique document revision
-- **_doc (array)_** - The data containing the update contents
-
-Updates a document in a CouchDB database.
-
-```php
-$couch->updateDoc('your-database', 'Pilau', '1-599acfa0c7b36889599bde56276e444c', [
-    'servings'  => 4,
-    'subtitle'  => 'A delicious amalgam of rice and spices'
-]);
-```
-
-### updateDocs
-
-```
-updateDocs(string $database, array $docs): bool
-```
-
-**Argument(s):**
-
-- **_database (string)_** - CouchDB database
-- **_docs (array)_** - A list of documents to update
-
-> `_id` and `_rev` keys are mandatory for each `docs` array entry
-
-Updates multiple documents in a CouchDB database.
-
-```php
-$couch->updateDocs('your-database', [
-    'docs' => [
-        [
-            '_id'       => 'fishStew',
-            '_rev'      => '1-41669894c7d25a634f5de4fef75fb982'
-            'servings'  => 2,
-            'subtitle'  => 'Delicious with freshly baked bread'
+      'language'  => 'javascript',
+      'views'     => [
+        'servings-view' => [
+          'map' => 'function (doc) { emit(doc._id, doc.servings) }'
         ],
-        [
-            '_id'       => 'LambStew',
-            '_rev'      => '1-599acfa0c7b36889599bde56276e444c',
-            'servings'  => 3,
-            'subtitle'  => 'Serve with a whole meal scone topping'
-        ]
-    ]
-]);
+      ],
+    ],
+  )
+) {
+  echo 'Successfully created design document' . PHP_EOL;
+}
+```
+
+### view
+
+Queries a view and retrieves all the records it is configured to project.
+
+```php
+public CouchDb::view(
+  string $database,
+  string $designDocument,
+  string $view
+  array $options = null
+);
+```
+
+#### Parameters
+
+- **database** (string) - The database the data in which the view projects
+- **designDocument** (string) - The identifier of the design document
+- **view** (string) - The name of the view
+- **options** (array) - Additional non-mandatory query options
+
+```php
+$basic = CouchDb::connect(
+  [
+    'user' => 'admin',
+    'pass' => 'root',
+  ],
+);
+
+$session = $basic->session();
+
+echo $basic->view(
+  'recipes',
+  'recipesDoc',
+  'servings-view',
+  [
+    'descending'  => true,
+    'conflicts'   => false,
+    'update'      => true,
+  ],
+);
 ```
 
 ### changes
 
-```
-changes(string $database, array $options = []): string
-```
-
-**Argument(s):**
-
-- **_database (string)_** - The name of the database
-- **_options (array)_** - An array of CouchDB-specific change tracking options
-
-Conveys changes made to a database.
+Retrieves a history of all actions performed on a database.
 
 ```php
-echo $couch->changes('your-database', [
-    'conflicts'     => 'true',
-    'include_docs'  => 'true',
-    'descending'    => 'true'
-])
+public CouchDb::changes(string $database, array $options = null);
 ```
+
+#### Parameters
+
+- **database** (string) - The database whose history you intend to track
+- **options** (array) - A list of options with which to tune the CouchDB response
+
+```php
+$basic = CouchDb::connect(
+  [
+    'user' => 'root',
+    'pass' => 'admin',
+  ],
+);
+
+echo $basic->changes(
+  'recipes',
+  [
+    'conflicts'     => true,
+    'include_docs'  => true,
+    'descending'    => true,
+  ],
+);
+```
+
+### transaction
+
+Concurrently executes multiple CouchDB actions in a fashion akin to transactions in SQL.
+
+```php
+public CouchDb::transaction(array $actions);
+```
+
+This function throws an exception in situations where the requisite protothreads library is not installed.
+
+#### Parameters
+
+- **actions** (array) - A list of PHP functions in which to subsume extension-supported CouchDB operations
+
+```php
+$basic = CouchDb::connect(
+  [
+    'user' => 'root',
+    'pass' => 'admin',
+    'type' => CouchDb::RETURN_ARRAY,
+  ],
+);
+
+$session = $basic->session();
+
+print_r(
+  $session->transaction(
+    [
+      // create a database
+      fn () => $session->database('recipes'),
+      // insert documents in database
+      fn () =>
+        $session->insertDocuments(
+          'recipes',
+          [
+            [
+              '_id'       => 'FishStew',
+              'servings'  => 4,
+              'subtitle'  => 'Delicious with freshly baked bread',
+            ],
+            [
+              '_id'       => 'LambStew',
+              'servings'  => 6,
+              'subtitle'  => 'Serve with a whole meal scone topping',
+            ],
+          ],
+        ),
+      // create index
+      fn () =>
+        $session->createIndex(
+          'recipes',
+          [
+            'ddoc'      => 'servings-index',
+            'type'      => 'json',
+            'index'     => [
+              'fields'  => ['servings', 'subtitle'],
+            ],
+          ],
+        ),
+      // create design document
+      fn () =>
+        $session->createDesignDocument(
+          'recipes',
+          'recipesDoc',
+          [
+            'language'  => 'javascript',
+            'views'     => [
+              'servings-view' => [
+                'map' => 'function (doc) { emit(doc._id, doc.servings) }'
+              ],
+            ],
+          ],
+        ),
+    ],
+  ),
+);
+```
+
+## Dealing with problems
+
+Endeavor to create an issue on GitHub when the need arises or send an email to lochbm@gmail.com
+
+## Contributing
+
+Consider buying me a coffee if you appreciate the offerings of the project and/or would like to provide more impetus for me to continue working on it.
+
+# <a href="https://www.buymeacoffee.com/agiroLoki" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/lato-white.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;" ></a>

@@ -16,27 +16,42 @@
 	 +----------------------------------------------------------------------+
 */
 
-define('COUCHDB_USER', 'admin');
-define('COUCHDB_PASS', 'password');
-define('COUCHDB_HOST', 'http://localhost');
+/**
+ * jsonType
+ * checks if a specified value is of the JSON data type
+ *
+ * @param mixed $data
+ * @return boolean
+ */
+function jsonType($data): bool
+{
+	return is_string($data) ? preg_match('/([{\}\[\]\d\w:",]+)/', $data) : false;
+}
 
 /**
- * configure
- * create custom CouchDB configurations
- * 
- * @param array $config
- * @return CouchDb
+ * getRevsFromDocs
+ * extracts individual document revisions from a set of documents
+ *
+ * @param array|null $data
+ * @return array
  */
-function configure(array $config = []): CouchDb
+function getRevsFromDocs(?array $data): array
 {
-  return CouchDb::connect(
-    array_merge(
-			[
-				'user' => COUCHDB_USER,
-				'pass' => COUCHDB_PASS,
-				'host' => COUCHDB_HOST,
-			],
-			$config,
-		),
-  );
+	if (is_null($data)) {
+		return [];
+	}
+
+	return array_reduce(
+		$data,
+		function ($acc, $doc) {
+			$rev = $doc['value']['rev'] ?? null;
+
+			if (!is_null($rev)) {
+				$acc[] = $rev;
+			}
+
+			return $acc;
+		},
+		[], 
+	);
 }
