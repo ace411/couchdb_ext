@@ -16,8 +16,8 @@
 	 +----------------------------------------------------------------------+
 */
 
-define('COUCHDB_USER', 'root');
-define('COUCHDB_PASS', 'admin');
+define('COUCHDB_USER', 'admin');
+define('COUCHDB_PASS', 'password');
 define('COUCHDB_HOST', 'http://localhost');
 
 /**
